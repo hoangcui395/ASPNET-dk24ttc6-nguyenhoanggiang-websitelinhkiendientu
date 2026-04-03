@@ -1,14 +1,14 @@
-# ĐỒ ÁN: [TÊN ĐỀ TÀI CỦA ANH TẠI ĐÂY]
+# ĐỒ ÁN: Xây dựng Website bán linh kiện điện tử.
 
 ## 1. Thông tin sinh viên
-* **Họ và tên:** Phan Công Sơn (Củi)
-* **Mã số sinh viên:** [Nhập MSSV của anh]
-* **Lớp:** [Nhập tên lớp, ví dụ: DA21TTA]
+* **Họ và tên:** Nguyễn Hoàng Giang
+* **Mã số sinh viên:** 170124643
+* **Lớp:** DK24TTC6
 * **Giảng viên hướng dẫn:** Thầy Đoàn (antonio86doan)
 
 ## 2. Giới thiệu đồ án
 Mô tả ngắn gọn về phần mềm/website anh đang làm. 
-*(Ví dụ: Hệ thống quản lý bán hàng linh kiện điện tử bằng ASP.NET Core)*
+* Hệ thống quản lý bán hàng linh kiện điện tử bằng ASP.NET
 
 ## 3. Các chức năng chính đã thực hiện
 * [ ] Thiết kế cơ sở dữ liệu (Tuần 1)
