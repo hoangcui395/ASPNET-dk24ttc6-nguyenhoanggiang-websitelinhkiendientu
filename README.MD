@@ -7,7 +7,7 @@
 * **Giảng viên hướng dẫn:** Thầy Đoàn (antonio86doan)
 
 ## 2. Giới thiệu đồ án
-Mô tả ngắn gọn về phần mềm/website anh đang làm. 
+Mô tả ngắn gọn về phần mềm/website đang làm. 
 * Hệ thống quản lý bán hàng linh kiện điện tử bằng ASP.NET
 
 ## 3. Các chức năng chính đã thực hiện
