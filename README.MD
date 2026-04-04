@@ -2,9 +2,11 @@
 
 ## 1. Thông tin sinh viên
 * **Họ và tên:** Nguyễn Hoàng Giang
+* **Số điện thoại:** 0965158069
+* **Email** hoanggiang395@gmail.com
 * **Mã số sinh viên:** 170124643
 * **Lớp:** DK24TTC6
-* **Giảng viên hướng dẫn:** Thầy Đoàn (antonio86doan)
+* **Giảng viên hướng dẫn:** Thầy Đoàn Phước Miền
 
 ## 2. Giới thiệu đồ án
 Mô tả ngắn gọn về phần mềm/website đang làm. 
