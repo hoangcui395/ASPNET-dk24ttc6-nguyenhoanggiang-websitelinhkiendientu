@@ -1,0 +1,385 @@
+@model LinhKienDienTu_Web.Models.CheckoutViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Xác nhận đơn hàng";
+    var culture = new CultureInfo("vi-VN");
+}
+
+<style>
+    .checkout-hero {
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        padding: 2.5rem 0 2rem;
+        margin-bottom: 2rem;
+    }
+    .form-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .summary-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        position: sticky;
+        top: 80px;
+    }
+    .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .product-line {
+        border-bottom: 1px solid #f1f5f9;
+        padding: 0.85rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+    }
+    .product-line:last-child { border-bottom: none; }
+    .product-thumb {
+        width: 52px;
+        height: 52px;
+        object-fit: cover;
+        border-radius: 10px;
+        flex-shrink: 0;
+    }
+    .tphcm-badge {
+        display: inline-block;
+        background: #fff7ed;
+        color: #c2410c;
+        border: 1px solid #fed7aa;
+        border-radius: 50rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.15em 0.6em;
+    }
+    .btn-checkout {
+        background: #0056b3;
+        color: white;
+        border: none;
+        border-radius: 50rem;
+        padding: 0.85rem 2rem;
+        font-weight: 700;
+        font-size: 1rem;
+        width: 100%;
+        transition: background 0.2s, transform 0.15s;
+    }
+    .btn-checkout:hover {
+        background: #55aa00;
+        transform: translateY(-1px);
+    }
+    .btn-checkout:disabled {
+        background: #94a3b8;
+        transform: none;
+        cursor: not-allowed;
+    }
+    .step-badge {
+        background: #0056b3;
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+</style>
+
+<!-- Hero -->
+<div class="checkout-hero">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(102,204,0,0.15); border-radius: 14px; padding: 0.9rem 1.1rem;">
+                <i class="fas fa-clipboard-check fa-xl" style="color: #0056b3;"></i>
+            </div>
+            <div>
+                <h1 class="fw-bold text-white mb-1">Xác nhận đơn hàng</h1>
+                <p class="text-white-50 mb-0">Kiểm tra lại giỏ hàng, nhập địa chỉ và xác nhận đặt hàng.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4">
+
+        <!-- Cột trái: Form -->
+        <div class="col-lg-7">
+            <div class="form-card bg-white p-4">
+
+                @* Cảnh báo địa lý *@
+                @if (Model.Summary.HasTphcmOnlyItems)
+                {
+                    <div class="alert rounded-4 border-0 mb-4 d-flex align-items-start gap-3"
+                         style="background: #fff7ed; border-left: 4px solid #f97316 !important;">
+                        <i class="fas fa-triangle-exclamation mt-1" style="color: #f97316;"></i>
+                        <div>
+                            <div class="fw-bold" style="color:#c2410c;">Lưu ý sản phẩm tươi/lạnh</div>
+                            <div class="small" style="color:#9a3412;">
+                                Đơn hàng có sản phẩm chỉ giao tại TP.HCM. Vui lòng nhập địa chỉ giao hàng trong nội thành TP.HCM.
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @* Validation summary *@
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-4 mb-3"></div>
+
+                <form asp-action="ProcessCheckout" method="post" id="checkoutForm">
+                    @for (int i = 0; i < Model.SelectedProductIds.Count; i++)
+                    {
+                        <input type="hidden" name="SelectedProductIds[@i]" value="@Model.SelectedProductIds[i]" />
+                    }
+                    <input type="hidden" name="VoucherCode" value="@Model.VoucherCode" />
+
+                    <!-- Bước 1: Địa chỉ -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="step-badge">1</span>
+                            <span class="section-label mb-0">Địa chỉ giao hàng</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="small text-muted mb-1">Số nhà, tên đường, phường</label>
+                                <input type="text" id="AddressStreet" class="form-control rounded-3" placeholder="Ví dụ: 123 Nguyễn Đình Chiểu, P.6">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small text-muted mb-1">Quận / Huyện (TP.HCM)</label>
+                                <select asp-for="QuanHuyen" id="AddressDistrict" class="form-select rounded-3">
+                                    <option value="">-- Chọn Quận/Huyện --</option>
+                                    <optgroup label="Nội thành (Ship: 15.000đ)">
+                                        <option>Quận 1</option>
+                                        <option>Quận 3</option>
+                                        <option>Quận 4</option>
+                                        <option>Quận 5</option>
+                                        <option>Quận 6</option>
+                                        <option>Quận 10</option>
+                                        <option>Quận 11</option>
+                                        <option>Quận Phú Nhuận</option>
+                                        <option>Quận Bình Thạnh</option>
+                                        <option>Quận Tân Bình</option>
+                                    </optgroup>
+                                    <optgroup label="Ngoại thành (Ship: 30.000đ)">
+                                        <option>Quận 7</option>
+                                        <option>Quận 8</option>
+                                        <option>Quận 12</option>
+                                        <option>Quận Bình Tân</option>
+                                        <option>Quận Tân Phú</option>
+                                        <option>Quận Thủ Đức</option>
+                                        <option>Huyện Bình Chánh</option>
+                                        <option>Huyện Cần Giờ</option>
+                                        <option>Huyện Củ Chi</option>
+                                        <option>Huyện Hóc Môn</option>
+                                        <option>Huyện Nhà Bè</option>
+                                    </optgroup>
+                                </select>
+                                <span asp-validation-for="QuanHuyen" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <!-- Trường ẩn để gửi về Server -->
+                        <input type="hidden" asp-for="DiaChiGiaoHang" id="FullAddress" />
+                    </div>
+
+                    <!-- Bước 2: Phương thức thanh toán -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="step-badge">2</span>
+                            <span class="section-label mb-0">Phương thức thanh toán</span>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="PhuongThucThanh_Toan" id="payCOD" value="COD" checked autocomplete="off">
+                                <label class="btn btn-outline-success w-100 p-3 rounded-4 d-flex align-items-center gap-3" for="payCOD">
+                                    <i class="fas fa-money-bill-wave fa-lg"></i>
+                                    <div class="text-start">
+                                        <div class="fw-bold">Tiền mặt (COD)</div>
+                                        <div class="small opacity-75">Thanh toán khi nhận hàng</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="PhuongThucThanh_Toan" id="payVNPay" value="VNPay" autocomplete="off">
+                                <label class="btn btn-outline-primary w-100 p-3 rounded-4 d-flex align-items-center gap-3" for="payVNPay">
+                                    <i class="fas fa-credit-card fa-lg"></i>
+                                    <div class="text-start">
+                                        <div class="fw-bold">Ví VNPay / Thẻ</div>
+                                        <div class="small opacity-75">Thanh toán trực tuyến</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bước 3: Ghi chú -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="step-badge" style="background:#94a3b8;">3</span>
+                            <span class="section-label mb-0">Ghi chú đơn hàng <span class="text-muted fw-normal">(tùy chọn)</span></span>
+                        </div>
+                        <textarea asp-for="GhiChu"
+                                  class="form-control rounded-3"
+                                  rows="2"
+                                  id="GhiChu"
+                                  placeholder="Ví dụ: Giao buổi sáng, gọi trước 30 phút, không giao cuối tuần..."
+                                  style="resize:none;"></textarea>
+                    </div>
+
+                    <!-- Hành động -->
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="fas fa-arrow-left me-2"></i>Quay lại giỏ hàng
+                        </a>
+                        <button type="submit" class="btn-checkout" id="submitBtn">
+                            <i class="fas fa-check-circle me-2"></i>Xác nhận đặt hàng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cột phải: Tóm tắt sản phẩm -->
+        <div class="col-lg-5">
+            <div class="summary-card bg-white p-4">
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <span class="step-badge">3</span>
+                    <span class="section-label mb-0">Sản phẩm trong đơn</span>
+                </div>
+
+                <div>
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="product-line">
+                            <img src="@(string.IsNullOrWhiteSpace(item.Image) ? "/images/placeholder.png" : item.Image)"
+                                 alt="@item.Name" class="product-thumb" />
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="fw-semibold text-truncate" style="max-width:180px;">@item.Name</div>
+                                <div class="small text-muted">
+                                    @if (item.OriginalPrice > item.Price)
+                                    {
+                                        <del class="text-secondary opacity-50 me-1">@item.OriginalPrice.ToString("C0", culture)</del>
+                                    }
+                                    @item.Price.ToString("C0", culture) &times; @item.Quantity
+                                </div>
+                                @if (item.IsTphcmOnly)
+                                {
+                                    <span class="tphcm-badge mt-1">Chỉ giao TP.HCM</span>
+                                }
+                            </div>
+                            <div class="fw-bold text-success text-nowrap">@item.LineTotal.ToString("C0", culture)</div>
+                        </div>
+                    }
+                </div>
+
+                <div class="mt-3 pt-3 border-top">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Tổng tiền hàng gốc</span>
+                        <strong class="text-muted">@Model.Summary.TotalOriginalAmount.ToString("C0", culture)</strong>
+                    </div>
+                    @if (Model.Summary.TotalPromotionDiscount > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-success small"><i class="fas fa-tags me-1"></i>Tiết kiệm từ Khuyến mãi</span>
+                            <span class="text-success">-@Model.Summary.TotalPromotionDiscount.ToString("C0", culture)</span>
+                        </div>
+                    }
+                    
+                    <input type="hidden" id="subtotalValue" data-val="@Model.Summary.TotalAmount.ToString("G", System.Globalization.CultureInfo.InvariantCulture)" />
+
+                    @if (Model.VoucherDiscount > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-success small"><i class="fas fa-ticket-alt me-1"></i>Voucher giảm giá (@Model.VoucherCode)</span>
+                            <strong class="text-success" id="voucherDiscountText" data-val="@Model.VoucherDiscount.ToString("G", System.Globalization.CultureInfo.InvariantCulture)">-@Model.VoucherDiscount.ToString("C0", culture)</strong>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Phí vận chuyển</span>
+                        <strong id="shippingFeeText">0đ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="fw-semibold">Tổng thanh toán</span>
+                        <span class="fw-bold fs-5" style="color:#0056b3;" id="finalTotalText">@((Model.Summary.TotalAmount - Model.VoucherDiscount).ToString("C0", culture))</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const streetInput = document.getElementById('AddressStreet');
+            const districtSelect = document.getElementById('AddressDistrict');
+            const fullAddressInput = document.getElementById('FullAddress');
+            
+            const subtotal = parseFloat(document.getElementById('subtotalValue').dataset.val || 0);
+            const voucherDiscount = parseFloat(document.getElementById('voucherDiscountText')?.dataset.val || 0);
+            const shippingFeeText = document.getElementById('shippingFeeText');
+            const finalTotalText = document.getElementById('finalTotalText');
+
+            function formatVND(amount) {
+                return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+            }
+
+            function updateFullAddress() {
+                const street = streetInput.value.trim();
+                const district = districtSelect.value;
+                
+                let shippingFee = 0;
+                if (district) {
+                    const optGroup = districtSelect.options[districtSelect.selectedIndex].parentNode.label || "";
+                    if (optGroup.includes("Nội thành")) {
+                        shippingFee = 15000;
+                    } else if (optGroup.includes("Ngoại thành")) {
+                        shippingFee = 30000;
+                    }
+
+                    fullAddressInput.value = `${street}, ${district}, TP.HCM`;
+                } else {
+                    fullAddressInput.value = "";
+                }
+
+                shippingFeeText.innerText = formatVND(shippingFee);
+                finalTotalText.innerText = formatVND(subtotal + shippingFee - voucherDiscount);
+            }
+
+            streetInput.addEventListener('input', updateFullAddress);
+            districtSelect.addEventListener('change', updateFullAddress);
+
+            // Khởi tạo giá trị ban đầu
+            updateFullAddress();
+
+            document.getElementById('checkoutForm')?.addEventListener('submit', function (e) {
+                // Kiểm tra bắt buộc nhập địa chỉ
+                if (!districtSelect.value || !streetInput.value.trim()) {
+                    e.preventDefault();
+                    alert('Vui lòng điền đầy đủ cả "Tên đường/Phường" và chọn "Quận/Huyện" trước khi tiếp tục.');
+                    return;
+                }
+
+                // Đảm bảo voucherCode được trim trước khi submit
+                const voucherInput = document.querySelector('input[name="VoucherCode"]');
+                if (voucherInput) {
+                    voucherInput.value = voucherInput.value.trim();
+                }
+
+                updateFullAddress(); 
+                
+                const btn = document.getElementById('submitBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Đang xử lý...';
+                }
+            });
+        });
+    </script>
+}

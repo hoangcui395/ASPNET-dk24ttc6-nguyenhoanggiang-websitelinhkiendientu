@@ -1,0 +1,160 @@
+@model IEnumerable<LinhKienDienTu_Web.Models.User>
+@{
+    ViewData["Title"] = "Quản lý Người dùng";
+}
+
+<style>
+    .user-table-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(102, 204, 0, 0.1);
+        background: white;
+    }
+    .badge-admin {
+        background-color: #0056b3;
+        color: white;
+    }
+    .badge-user {
+        background-color: #f8f9fa;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+    }
+    .table thead th {
+        background-color: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        border-top: none;
+    }
+    .avatar-circle {
+        width: 36px;
+        height: 36px;
+        background-color: #f1f5f9;
+        color: #0056b3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-success mb-1">Quản lý Người dùng</h2>
+            <p class="text-muted small mb-0">Hệ thống có tổng cộng @Model.Count() tài khoản.</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success border-0 shadow-sm mb-4">
+            <i class="fas fa-check-circle me-2"></i> @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger border-0 shadow-sm mb-4">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["Error"]
+        </div>
+    }
+
+    <div class="user-table-card p-4">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Người dùng</th>
+                        <th>Email</th>
+                        <th>Số điện thoại</th>
+                        <th>Vai trò</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td class="ps-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar-circle">
+                                        @user.Ho_Ten.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">@user.Ho_Ten</div>
+                                        <div class="text-muted small">ID: #@user.User_ID</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@user.Email</td>
+                            <td>@user.So_Dien_Thoai</td>
+                            <td>
+                                @if (user.IsLocked)
+                                {
+                                    <span class="badge rounded-pill bg-danger px-3 py-2">
+                                        <i class="fas fa-lock me-1"></i> Bị khóa
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 py-2">
+                                        <i class="fas fa-check me-1"></i> Hoạt động
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-muted small">
+                                @user.Created_At.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="btn-group gap-1">
+                                    <a asp-action="Details" asp-route-id="@user.User_ID" class="btn btn-sm btn-outline-info border-0" title="Xem chi tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    <form asp-action="ToggleLock" asp-route-id="@user.User_ID" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm @(user.IsLocked ? "btn-outline-warning" : "btn-outline-danger") border-0" 
+                                                title="@(user.IsLocked ? "Mở khóa tài khoản" : "Khóa tài khoản")">
+                                            <i class="fas @(user.IsLocked ? "fa-unlock" : "fa-user-lock")"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <button type="button" class="btn btn-sm btn-outline-secondary border-0" 
+                                            data-bs-toggle="modal" data-bs-target="#deleteModal-@user.User_ID" title="Xóa">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Modal Xóa -->
+                                <div class="modal fade" id="deleteModal-@user.User_ID" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header border-0 pb-0">
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-center py-4">
+                                                <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 3rem;"></i>
+                                                <h4 class="fw-bold mb-3">Xác nhận xóa</h4>
+                                                <p class="text-muted">Bạn có chắc chắn muốn xóa tài khoản <strong>@user.Email</strong>? Hành động này không thể hoàn tác.</p>
+                                            </div>
+                                            <div class="modal-footer border-0 justify-content-center pb-4">
+                                                <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                                                <form asp-action="Delete" asp-route-id="@user.User_ID" method="post">
+                                                    <button type="submit" class="btn btn-danger px-4 rounded-pill">Xóa ngay</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+@model SubCategory
+@{
+    ViewData["Title"] = "Xóa danh mục con";
+}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0 text-danger">Xóa danh mục con</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+    </div>
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+        <div class="card-body p-4">
+            <div class="alert alert-danger">Bạn có chắc muốn xóa <strong>@Model.Ten_Danh_Muc_Con</strong>?</div>
+            <p><strong>Số sản phẩm liên kết:</strong> @Model.Products.Count</p>
+            @if (Model.Products.Any())
+            {
+                <div class="alert alert-warning">Danh mục con đang có sản phẩm, vui lòng chuyển/xóa sản phẩm trước.</div>
+            }
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="SubCategory_ID" />
+                <button class="btn btn-danger" type="submit" @(Model.Products.Any() ? "disabled" : null)>Xóa</button>
+            </form>
+        </div>
+    </div>
+</div>

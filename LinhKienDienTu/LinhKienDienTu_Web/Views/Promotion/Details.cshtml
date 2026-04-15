@@ -1,0 +1,122 @@
+@model Promotion
+@using LinhKienDienTu_Web.Models
+@using System.Globalization
+@{
+    ViewData["Title"] = $"Chi tiết khuyến mãi #{Model.Promotion_ID}";
+    var products = ViewBag.Products as List<Product> ?? new();
+    var culture = new CultureInfo("vi-VN");
+    var isActive = Model.Ngay_Bat_Dau <= DateTime.Now && Model.Ngay_Ket_Thuc >= DateTime.Now;
+}
+
+<style>
+    .promo-detail-card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+    .promo-stat { background: #f8fafc; border-radius: 12px; padding: 1rem 1.25rem; }
+    .product-row { padding: 0.65rem 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.75rem; }
+    .product-row:last-child { border-bottom: none; }
+    .product-img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold mb-0" style="color:#2e59d9;">Chi tiết khuyến mãi</h2>
+        <span class="badge rounded-pill @(isActive ? "bg-success" : "bg-secondary") ms-2">
+            @(isActive ? "Đang chạy" : "Không hoạt động")
+        </span>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Thông tin khuyến mãi -->
+        <div class="col-lg-4">
+            <div class="promo-detail-card bg-white p-4 mb-3">
+                <h5 class="fw-bold mb-1">@Model.Ten_Khuyen_Mai</h5>
+                <div class="text-muted small mb-3">ID: #@Model.Promotion_ID</div>
+
+                <div class="promo-stat mb-3">
+                    <div class="text-muted small">Mức giảm</div>
+                    <div class="fs-3 fw-bold text-danger">@Model.Phan_Tram_Giam%</div>
+                </div>
+
+                <div class="promo-stat mb-3">
+                    <div class="text-muted small mb-1">Thời gian</div>
+                    <div class="small">
+                        <i class="fas fa-calendar-check me-1 text-success"></i>
+                        @Model.Ngay_Bat_Dau.ToString("dd/MM/yyyy") →
+                        @Model.Ngay_Ket_Thuc.ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+
+                <div class="promo-stat">
+                    <div class="text-muted small">Số sản phẩm áp dụng</div>
+                    <div class="fw-bold fs-5 text-success">@products.Count</div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.Promotion_ID" class="btn btn-primary rounded-pill">
+                    <i class="fas fa-pen me-2"></i>Sửa khuyến mãi
+                </a>
+                <a asp-action="Delete" asp-route-id="@Model.Promotion_ID" class="btn btn-outline-danger rounded-pill">
+                    <i class="fas fa-trash me-2"></i>Xóa khuyến mãi
+                </a>
+            </div>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <div class="col-lg-8">
+            <div class="promo-detail-card bg-white p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold mb-0">Sản phẩm đang áp dụng</h5>
+                    <a asp-action="Edit" asp-route-id="@Model.Promotion_ID"
+                       class="btn btn-sm btn-outline-success rounded-pill">
+                        <i class="fas fa-plus me-1"></i>Gán thêm
+                    </a>
+                </div>
+
+                @if (!products.Any())
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-box-open fa-3x mb-3 d-block"></i>
+                        Chưa có sản phẩm nào được gán cho khuyến mãi này.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var p in products)
+                    {
+                        var salePrice = p.Gia_Goc * (1 - Model.Phan_Tram_Giam / 100m);
+
+                        <div class="product-row">
+                            <img src="@(string.IsNullOrWhiteSpace(p.Hinh_Anh) ? "/images/placeholder.png" : p.Hinh_Anh)"
+                                 alt="@p.Ten_San_Pham" class="product-img" />
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">@p.Ten_San_Pham</div>
+                                <div class="small text-muted">
+                                    @(p.SubCategory?.Ten_Danh_Muc_Con ?? "—")
+                                    &nbsp;·&nbsp;
+                                    <span class="text-decoration-line-through">@p.Gia_Goc.ToString("C0", culture)</span>
+                                    →
+                                    <span class="text-danger fw-semibold">@salePrice.ToString("C0", culture)</span>
+                                </div>
+                            </div>
+                            <!-- Nút gỡ -->
+                            <form asp-action="RemoveProduct" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="promotionId" value="@Model.Promotion_ID" />
+                                <input type="hidden" name="productId" value="@p.Product_ID" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"
+                                        onclick="return confirm('Gỡ sản phẩm này khỏi khuyến mãi?')">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,96 @@
+@model IEnumerable<LinhKienDienTu_Web.Models.Product>
+@{
+    ViewData["Title"] = "Khuyến mãi hàng loạt";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="fas fa-bolt me-2 text-warning"></i>Khuyến mãi hàng loạt</h2>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4">@TempData["ErrorMessage"]</div>
+    }
+
+    <form asp-action="ApplyBatch" method="post" id="batchForm">
+        <div class="card border-0 shadow rounded-4 mb-4 p-4" style="background: #f8f9fa;">
+            <div class="row align-items-end g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Bước 1: Nhập phần trăm giảm giá (%)</label>
+                    <div class="input-group">
+                        <input type="number" name="discountPercent" class="form-control border-0 shadow-sm p-3" value="0" min="0" max="100" />
+                        <span class="input-group-text border-0 bg-white shadow-sm fw-bold">%</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-muted small">Cập nhật ngay lập tức cho các SP đã chọn</label>
+                    <button type="submit" class="btn btn-warning w-100 py-3 fw-bold rounded-pill shadow">
+                        <i class="fas fa-check-circle me-2"></i>Áp dụng hàng loạt
+                    </button>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" onclick="toggleSelectAll()">Chọn tất cả</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light sticky-top" style="z-index:100;">
+                        <tr class="small text-uppercase text-muted">
+                            <th class="ps-4" style="width: 50px;">Chọn</th>
+                            <th>Sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Giá gốc</th>
+                            <th>Khuyến mãi hiện tại</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" name="productIds" value="@item.Product_ID" class="form-check-input product-check" style="width:20px; height:20px; cursor:pointer;" />
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="@item.Hinh_Anh" style="width:40px; height:40px; object-fit:contain;" class="me-2" />
+                                        <span class="fw-semibold">@item.Ten_San_Pham</span>
+                                    </div>
+                                </td>
+                                <td class="small text-muted">@item.SubCategory?.Ten_Danh_Muc_Con</td>
+                                <td class="fw-bold">@item.Gia_Goc.ToString("N0")đ</td>
+                                <td>
+                                    @if (item.Phan_Tram_Giam > 0)
+                                    {
+                                        <span class="badge bg-danger rounded-pill">-@item.Phan_Tram_Giam%</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">0%</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        let allSelected = false;
+        function toggleSelectAll() {
+            allSelected = !allSelected;
+            $('.product-check').prop('checked', allSelected);
+        }
+    </script>
+}

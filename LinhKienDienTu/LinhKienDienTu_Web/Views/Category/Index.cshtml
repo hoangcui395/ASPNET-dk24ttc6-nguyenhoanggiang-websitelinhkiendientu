@@ -1,0 +1,85 @@
+﻿@model IEnumerable<Category>
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+<style>
+    .main-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        background: white;
+    }
+
+    .btn-add {
+        background: #4e73df;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container py-5">
+    @if (TempData["SuccessMessage"] is string successMessage && !string.IsNullOrWhiteSpace(successMessage))
+    {
+        <script>
+            window.addEventListener('load', function () {
+                alert(@Html.Raw(JsonSerializer.Serialize(successMessage)));
+            });
+        </script>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger mb-3">@errorMessage</div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:#2e59d9;">Danh mục sản phẩm</h2>
+            <small class="text-muted">Quản lý nhóm danh mục chính trong hệ thống.</small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/SubCategory" class="btn btn-outline-primary">Quản lý danh mục con</a>
+            <a href="/Promotion" class="btn btn-outline-success">Quản lý khuyến mãi</a>
+            <a asp-action="Create" class="btn btn-add"><i class="bi bi-plus-circle me-1"></i> Thêm danh mục</a>
+        </div>
+    </div>
+
+    <div class="main-card">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-3">ID</th>
+                        <th class="px-4 py-3">Tên danh mục</th>
+                        <th class="px-4 py-3 text-center">Số danh mục con</th>
+                        <th class="px-4 py-3 text-end">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="px-4 py-3">#@item.Category_ID</td>
+                            <td class="px-4 py-3 fw-semibold">@item.Ten_Danh_Muc</td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="badge bg-light text-dark border">@item.SubCategories.Count</span>
+                            </td>
+                            <td class="px-4 py-3 text-end">
+                                <a asp-action="Edit" asp-route-id="@item.Category_ID" class="btn btn-sm btn-outline-primary">Sửa</a>
+                                <a asp-action="Details" asp-route-id="@item.Category_ID" class="btn btn-sm btn-outline-info">Chi tiết</a>
+                                <a asp-action="Delete" asp-route-id="@item.Category_ID" class="btn btn-sm btn-outline-danger">Xóa</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

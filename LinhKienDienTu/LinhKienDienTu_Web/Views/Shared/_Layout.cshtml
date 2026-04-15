@@ -1,0 +1,642 @@
+@using LinhKienDienTu_Web.Models
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var isAdmin = User.IsInRole("Admin");
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Linh Kiện Điện Tử HG </title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+        /* ADMIN SIDEBAR */
+        .admin-sidebar {
+            width: 240px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #1e293b;
+            color: white;
+            z-index: 1050;
+            padding-top: 70px;
+        }
+
+            .admin-sidebar a {
+                display: block;
+                padding: 12px 20px;
+                color: #cbd5e1;
+                text-decoration: none;
+            }
+
+                .admin-sidebar a:hover {
+                    background: #334155;
+                    color: #fff;
+                }
+
+        .admin-content {
+            margin-left: 240px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 🔥 ADMIN SIDEBAR -->
+    @if (isAuthenticated && isAdmin)
+    {
+        <div class="admin-sidebar">
+            <h5 class="text-center mb-4">ADMIN PANEL</h5>
+
+            <a href="/Admin"><i class="fas fa-chart-line me-2"></i> Dashboard</a>
+            <a href="/Product"><i class="fas fa-box me-2"></i> Quản lý sản phẩm</a>
+            <a href="/AdminPromotion"><i class="fas fa-bolt me-2"></i> Khuyến mãi hàng loạt</a>
+            <a href="/AdminVoucher"><i class="fas fa-ticket-alt me-2"></i> Quản lý Voucher</a>
+            <a href="/AdminGiftRule"><i class="fas fa-gift me-2"></i> Quy tắc quà tặng</a>
+            <a href="/Category"><i class="fas fa-list me-2"></i> Danh mục chính</a>
+            <a href="/SubCategory"><i class="fas fa-sitemap me-2"></i> Danh mục con</a>
+            <a href="/AdminOrder"><i class="fas fa-shopping-cart me-2"></i> Đơn hàng</a>
+            <a href="/AdminChat"><i class="fas fa-comment-dots me-2"></i> Hỗ trợ trực tuyến</a>
+            <a href="/AdminUser"><i class="fas fa-users me-2"></i> Người dùng</a>
+
+            <hr class="bg-light">
+
+            <a href="/Account/Logout" class="text-danger">
+                <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+            </a>
+        </div>
+    }
+
+    <!-- 🔥 WRAPPER -->
+    <div class="@(isAuthenticated && isAdmin ? "admin-content" : "")">
+
+        <!-- HEADER GIỮ NGUYÊN -->
+        <header class="sticky-top bg-white">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                <div class="container">
+                    <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
+                        <span style="color: #0056b3 ; font-weight: 900;">Linh Kiện Điện Tử HG </span>
+                    </a>
+
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                    DANH MỤC SẢN PHẨM
+                                </a>
+
+                                <ul class="dropdown-menu border-0 shadow-lg p-3">
+                                    @if (ViewData["Categories"] is List<Category> categories)
+                                    {
+                                        foreach (var cat in categories)
+                                        {
+                                            <li>
+                                                <a href="/Home/Index?categoryId=@cat.Category_ID" class="dropdown-header fw-bold text-success text-decoration-none">
+                                                    @cat.Ten_Danh_Muc
+                                                </a>
+                                            </li>
+
+                                            @foreach (var sub in cat.SubCategories)
+                                            {
+                                                <li>
+                                                    <a class="dropdown-item" href="/Home/Index?subCategoryId=@sub.SubCategory_ID">
+                                                        @sub.Ten_Danh_Muc_Con
+                                                    </a>
+                                                </li>
+                                            }
+
+                                            <li><hr class="dropdown-divider"></li>
+                                        }
+                                    }
+                                </ul>
+                            </li>
+
+                            <!-- 🔥 ADMIN MENU TOP -->
+                            @if (isAuthenticated && isAdmin)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-danger fw-bold" href="/Admin">ADMIN</a>
+                                </li>
+                            }
+                        </ul>
+
+                        <div class="d-flex align-items-center gap-3">
+
+                            <!-- SEARCH -->
+                            <form class="position-relative d-none d-md-block" action="/Product/Search" method="get" aria-label="Tìm kiếm sản phẩm">
+                                <input id="searchInput" name="keyword" class="form-control rounded-pill pe-5" type="text" placeholder="Tìm sản phẩm..." autocomplete="off" aria-label="Nhập từ khóa tìm kiếm">
+                                <button type="submit" class="btn position-absolute top-50 end-0 translate-middle-y border-0" aria-label="Nút tìm kiếm">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <div id="searchSuggestions" class="position-absolute w-100 bg-white border rounded shadow-sm d-none mt-1" style="z-index: 1050; max-height: 300px; overflow-y: auto;">
+                                </div>
+                            </form>
+
+                            <!-- DARK MODE TOGGLE -->
+                            <button class="btn btn-light rounded-circle p-2" id="darkModeToggle" aria-label="Chuyển đổi chế độ tối/sáng">
+                                <i class="fas fa-moon" id="darkModeIcon"></i>
+                            </button>
+
+                            <!-- CART -->
+                            @if (isAuthenticated)
+                            {
+                                <a asp-controller="Cart" asp-action="Index" class="btn btn-light rounded-circle position-relative p-2" aria-label="Giỏ hàng">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span id="cart-badge-count" class="badge bg-danger position-absolute top-0 start-100 translate-middle">0</span>
+                                </a>
+                            }
+
+                            <!-- USER -->
+                            @if (isAuthenticated)
+                            {
+                                <div class="dropdown">
+                                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                                        @User.Identity?.Name
+                                    </a>
+
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i class="fas fa-user me-2 text-muted"></i>Tài khoản</a></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Order" asp-action="MyOrders">
+                                                <i class="fas fa-receipt me-2 text-muted"></i>Đơn hàng của tôi
+                                            </a>
+                                        </li>
+
+                                        @if (isAdmin)
+                                        {
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item" asp-controller="AdminOrder" asp-action="Index">
+                                                    <i class="fas fa-clipboard-list me-2 text-muted"></i>Quản lý đơn hàng
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" asp-controller="AdminChat" asp-action="Index">
+                                                    <i class="fas fa-comment-dots me-2 text-muted"></i>Hỗ trợ trực tuyến
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="/Admin">
+                                                    <i class="fas fa-gauge me-2"></i>Vào Admin
+                                                </a>
+                                            </li>
+                                        }
+
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
+                                                Đăng xuất
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-danger">Đăng nhập</a>
+                                <a asp-controller="Account" asp-action="Register" class="btn btn-success">Đăng ký</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- MAIN -->
+        <main class="pb-3">
+            @RenderBody()
+        </main>
+
+        <!-- FOOTER GIỮ NGUYÊN -->
+        <footer class="footer border-top text-muted pt-5 pb-3 bg-light">
+            <div class="container pb-3">
+                <div class="row mb-4">
+                    <div class="col-md-5 mb-4 mb-md-0 text-center text-md-start">
+                        <span style="color: #0056b3; font-weight: 900; font-size: 1.5rem;">LINH KIỆN ĐIỆN TỬ HG</span>
+                        <p class="small mt-2">Cung cấp linh kiện điện tử chất lượng: module, IC, cảm biến và phụ kiện cho dự án điện tử của bạn.</p>
+                    </div>
+                    <div class="col-md-3 mb-4 mb-md-0">
+                        <h6 class="text-uppercase fw-bold text-dark mb-3">Liên kết nhanh</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><a asp-controller="Home" asp-action="About" class="text-muted text-decoration-none">Về chúng tôi</a></li>
+                            <li class="mb-2"><a asp-controller="Home" asp-action="DeliveryPolicy" class="text-muted text-decoration-none">Chính sách Giao hàng</a></li>
+                            <li class="mb-2"><a asp-controller="Home" asp-action="GeneralPolicy" class="text-muted text-decoration-none">Điều khoản chung</a></li>
+                            <li class="mb-2"><a asp-controller="Home" asp-action="Privacy" class="text-muted text-decoration-none">Bảo mật thông tin</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase fw-bold text-dark mb-3">Đăng ký nhận bản tin</h6>
+                        <p class="small">Đăng ký thành viên để nhận thông tin sản phẩm mới và các ưu đãi hấp dẫn.</p>
+                        
+                        @if (TempData["NewsletterSuccess"] != null)
+                        {
+                            <div class="alert alert-success py-2 px-3 small">@TempData["NewsletterSuccess"]</div>
+                        }
+                        @if (TempData["NewsletterMessage"] != null)
+                        {
+                            <div class="alert alert-info py-2 px-3 small">@TempData["NewsletterMessage"]</div>
+                        }
+                        @if (TempData["NewsletterError"] != null)
+                        {
+                            <div class="alert alert-danger py-2 px-3 small">@TempData["NewsletterError"]</div>
+                        }
+
+                        <form asp-controller="Newsletter" asp-action="Subscribe" method="post" class="input-group">
+                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                            <input type="email" name="email" class="form-control" placeholder="Email của bạn..." required>
+                            <button class="btn text-white fw-bold" style="background-color: #0056b3;" type="submit">Đăng ký</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="text-center small border-top pt-3 text-muted">
+                    &copy; 2026 - LinhKienDienTu_Web
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- SCRIPT GIỮ NGUYÊN -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        function formatCartCurrency(value) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+                maximumFractionDigits: 0
+            }).format(value || 0);
+        }
+
+        function refreshCartSummary(summary) {
+            const countEl = document.getElementById('cart-badge-count');
+            const amountEl = document.getElementById('cart-badge-amount');
+
+            if (countEl) {
+                countEl.textContent = summary.totalItems ?? 0;
+            }
+
+            if (amountEl) {
+                amountEl.textContent = formatCartCurrency(summary.totalAmount ?? 0);
+            }
+        }
+
+        async function loadCartSummary() {
+            try {
+                const response = await fetch('/Cart/Summary', { method: 'GET' });
+                if (!response.ok) {
+                    return;
+                }
+
+                const summary = await response.json();
+                refreshCartSummary(summary);
+            } catch (error) {
+                console.warn('Không thể tải thông tin giỏ hàng.', error);
+            }
+        }
+
+        const isAuthenticated = @isAuthenticated.ToString().ToLowerInvariant();
+        document.addEventListener('DOMContentLoaded', () => {
+            // Dark Mode Toggle Logic
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            const body = document.body;
+
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                body.classList.add('dark-mode');
+                darkModeIcon?.classList.replace('fa-moon', 'fa-sun');
+            }
+
+            darkModeToggle?.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                if (body.classList.contains('dark-mode')) {
+                    localStorage.setItem('darkMode', 'enabled');
+                    darkModeIcon?.classList.replace('fa-moon', 'fa-sun');
+                } else {
+                    localStorage.setItem('darkMode', 'disabled');
+                    darkModeIcon?.classList.replace('fa-sun', 'fa-moon');
+                }
+            });
+
+            if (isAuthenticated) {
+                loadCartSummary();
+            }
+
+            // Search Ajax Suggestions Setup
+            let searchTimeout = null;
+            const searchInput = $('#searchInput');
+            const searchSuggestions = $('#searchSuggestions');
+
+            searchInput.on('keyup', function () {
+                clearTimeout(searchTimeout);
+                const query = $(this).val().trim();
+
+                if (query.length < 2) {
+                    searchSuggestions.addClass('d-none');
+                    return;
+                }
+
+                searchTimeout = setTimeout(function () {
+                    $.ajax({
+                        url: '/Product/Suggestions',
+                        data: { keyword: query },
+                        method: 'GET',
+                        success: function (data) {
+                            if (data && data.length > 0) {
+                                let html = '<ul class="list-group list-group-flush">';
+                                data.forEach(item => {
+                                    const formattedPrice = new Intl.NumberFormat('vi-VN').format(item.price) + 'đ';
+                                    html += `
+                                        <li class="list-group-item list-group-item-action d-flex align-items-center p-2" style="cursor:pointer;" onclick="window.location.href='/Home/Details/${item.id}'">
+                                            <img src="${item.img}" style="width: 40px; height: 40px; object-fit: contain; margin-right: 10px;" />
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold small text-dark">${item.name}</div>
+                                                <div class="text-danger small fw-bold">${formattedPrice}</div>
+                                            </div>
+                                        </li>
+                                    `;
+                                });
+                                html += '</ul>';
+                                searchSuggestions.html(html).removeClass('d-none');
+                            } else {
+                                searchSuggestions.html('<div class="p-3 small text-muted text-center">Không có gợi ý</div>').removeClass('d-none');
+                            }
+                        }
+                    });
+                }, 300); // Wait 300ms
+            });
+
+            // Hide suggestions when clicking outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('form').length) {
+                    searchSuggestions.addClass('d-none');
+                }
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Chatbot Hub -->
+    <div id="lkdt-chatbot-container" class="support-hub">
+        <!-- Chat Window -->
+        <div id="chatbot-window" class="chatbot-window shadow-lg d-none">
+            <div class="chatbot-header bg-success text-white">
+                <div class="d-flex align-items-center justify-content-between p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-robot fs-4 me-2"></i>
+                        <span class="fw-bold">Tư Vấn Linh Kiện Điện Tử HG</span>
+                    </div>
+                    <button class="btn border-0 text-white p-0" onclick="toggleChat()">
+                        <i class="fas fa-times fs-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="chatbot-messages" class="chatbot-body p-3">
+                <div class="chat-message bot-message">
+                    <div class="message-content">
+                        Xin chào! 🌿 Linh Kiện Điện Tử HG có thể giúp gì cho bạn hôm nay?
+                    </div>
+                </div>
+            </div>
+
+            <div class="chatbot-footer border-top p-2 bg-white d-flex align-items-center">
+                <input type="text" id="chatbot-input" class="form-control rounded-pill border-0 shadow-sm me-2" placeholder="Nhập tin nhắn..." onkeypress="handleChatPress(event)">
+                <button class="btn btn-success rounded-circle" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Bubble Button -->
+        <div id="chatbot-bubble" class="support-bubble" onclick="toggleChat()">
+            <i class="fas fa-headset fs-4"></i>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+        // Constants
+        const USER_ID = isAuthenticated ? "@User.Identity?.Name" : "Guest_" + Math.random().toString(36).substr(2, 5);
+        let currentSessionId = localStorage.getItem('lkdt_chat_session_id');
+        let chatStatus = 'Bot'; // 'Bot' or 'Human'
+        let signalRConnection = null;
+
+        function toggleChat() {
+            const windowEl = document.getElementById('chatbot-window');
+            windowEl.classList.toggle('d-none');
+            if (!windowEl.classList.contains('d-none') && !currentSessionId) {
+                initChat();
+            }
+        }
+
+        async function initChat() {
+            try {
+                const res = await fetch('/api/chatbot/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: USER_ID })
+                });
+                const data = await res.json();
+                currentSessionId = data.sessionId;
+                chatStatus = data.status;
+                localStorage.setItem('lkdt_chat_session_id', currentSessionId);
+                
+                if (chatStatus === 'Human') {
+                    startSignalR();
+                } else {
+                    showQuickReplies();
+                }
+            } catch (err) { console.error("Init chat failed", err); }
+        }
+
+        function showQuickReplies() {
+            const replies = [
+                { text: "🎁 Chính sách bảo hành", val: "bảo hành" },
+                { text: "🚚 Giao hàng TP.HCM", val: "tphcm" },
+                { text: "🔌 Tìm module Arduino/ESP", val: "module" },
+                { text: "🔍 Tìm IC thay thế", val: "ic" },
+                { text: "🎧 Gặp nhân viên", type: "transfer" }
+            ];
+            
+            let html = '<div class="quick-replies d-flex flex-wrap gap-2 mb-2">';
+            replies.forEach(r => {
+                if (r.type === 'transfer') {
+                    html += `<button class="btn btn-sm btn-outline-danger rounded-pill" onclick="requestHumanSupport()">${r.text}</button>`;
+                } else {
+                    html += `<button class="btn btn-sm btn-outline-success rounded-pill" onclick="quickSendMessage('${r.val}')">${r.text}</button>`;
+                }
+            });
+            html += '</div>';
+            $('#chatbot-messages').append(html);
+            scrollToBottom();
+        }
+
+        function quickSendMessage(val) {
+            $('.quick-replies').last().remove();
+            addMessage(val, 'user');
+            processBotMessage(val);
+        }
+
+        async function requestHumanSupport() {
+            $('.quick-replies').last().remove();
+            addMessage("Tôi cần gặp nhân viên hỗ trợ trực tiếp", 'user');
+            
+            const res = await fetch('/api/chatbot/transfer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentSessionId)
+            });
+            const data = await res.json();
+            addMessage(data.message, 'bot');
+            chatStatus = 'Human';
+            startSignalR();
+        }
+
+        function startSignalR() {
+            if (signalRConnection) return;
+            
+            signalRConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/chathub")
+                .build();
+
+            signalRConnection.on("ReceiveMessage", (sid, sender, msg) => {
+                if (sid === currentSessionId && sender === 'Admin') {
+                    addMessage(msg, 'bot'); // Admin messages appear as bot/support messages
+                }
+            });
+
+            signalRConnection.start().then(() => {
+                signalRConnection.invoke("JoinSession", currentSessionId);
+            });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatbot-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            input.value = '';
+
+            if (chatStatus === 'Human') {
+                if (signalRConnection) {
+                    signalRConnection.invoke("SendMessage", currentSessionId, message);
+                }
+            } else {
+                processBotMessage(message);
+            }
+        }
+
+        async function processBotMessage(msg) {
+            try {
+                const res = await fetch('/api/chatbot/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: currentSessionId, message: msg })
+                });
+                const data = await res.json();
+                addMessage(data.message, 'bot');
+                
+                if (data.isProductList) {
+                    showQuickReplies();
+                } else if (chatStatus !== 'Human') {
+                    setTimeout(showQuickReplies, 500);
+                }
+            } catch (err) { console.error("Chat message failed", err); }
+        }
+
+        function addMessage(text, sender) {
+            const msgContainer = document.getElementById('chatbot-messages');
+            const div = document.createElement('div');
+            div.className = `chat-message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+            div.innerHTML = `<div class="message-content">${text}</div>`;
+            msgContainer.appendChild(div);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const msgContainer = document.getElementById('chatbot-messages');
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+
+        function handleChatPress(e) { if (e.key === 'Enter') sendMessage(); }
+    </script>
+
+    <style>
+        .support-hub {
+            position: fixed;    
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+        }
+        .support-bubble {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #0056b3, #4ca600);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 204, 0, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            animation: bounce 2s infinite;
+        }
+        .support-bubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 204, 0, 0.6);
+            animation: none;
+        }
+        .chatbot-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            height: 450px;
+            background: #f8f9fa;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.3s ease;
+        }
+        .chatbot-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            background: #fdfdfd;
+        }
+        .chatbot-header { background-color: #0056b3 !important; }
+        .chat-message { margin-bottom: 12px; display: flex; }
+        .message-content {
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .bot-message { justify-content: flex-start; }
+        .bot-message .message-content { background: #e9ecef; color: #333; border-bottom-left-radius: 2px; }
+        .user-message { justify-content: flex-end; }
+        .user-message .message-content { background: #0056b3; color: white; border-bottom-right-radius: 2px; }
+        
+        @@keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+    </style>
+    <!-- End Chatbot Hub -->
+</body>
+</html>

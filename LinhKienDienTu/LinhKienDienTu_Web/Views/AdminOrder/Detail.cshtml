@@ -1,0 +1,331 @@
+@model LinhKienDienTu_Web.Models.Order
+@using System.Globalization
+@{
+    ViewData["Title"] = $"Đơn hàng #{Model.Order_ID}";
+    var culture = new CultureInfo("vi-VN");
+    string statusClass = Model.Trang_Thai_Don_Hang switch {
+        "Chờ xác nhận" => "s-cho",
+        "Đang lấy hàng" => "s-xacnhan",
+        "Đang giao" => "s-giao",
+        "Thành công" => "s-hoan",
+        _ => "s-huy"
+    };
+    bool canConfirm = Model.Trang_Thai_Don_Hang == "Chờ xác nhận";
+    bool canMarkShipping = Model.Trang_Thai_Don_Hang == "Đang lấy hàng";
+    bool canMarkComplete = Model.Trang_Thai_Don_Hang == "Đang giao";
+    bool canCancel = Model.Trang_Thai_Don_Hang != "Thành công" && Model.Trang_Thai_Don_Hang != "Đã hủy";
+    bool hasTphcm = ViewBag.HasTphcmItems == true;
+}
+
+<style>
+    .badge-status { font-size: 0.8rem; padding: 0.4em 1em; border-radius: 50rem; font-weight: 700; }
+    .s-cho      { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+    .s-xacnhan  { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .s-giao     { background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; }
+    .s-hoan     { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+    .s-huy      { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+    .info-card  { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+    .product-row { padding: 0.8rem 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.85rem; }
+    .product-row:last-child { border-bottom: none; }
+    .product-thumb { width: 52px; height: 52px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+    .tphcm-badge { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 50rem; font-size: 0.7rem; font-weight: 700; padding: 0.15em 0.6em; }
+    .action-btn { border-radius: 50rem; padding: 0.6rem 1.5rem; font-weight: 700; font-size: 0.9rem; }
+    .cancel-reason-option { cursor: pointer; border: 2px solid #e2e8f0; border-radius: 10px; padding: 0.65rem 1rem; margin-bottom: 0.5rem; display: block; transition: all 0.15s; }
+    .cancel-reason-option:has(input:checked) { border-color: #dc2626; background: #fef2f2; }
+    .workflow-step { display: flex; align-items: center; gap: 0.4rem; }
+    .workflow-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .step-done { background: #16a34a; }
+    .step-current { background: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.2); }
+    .step-future { background: #e2e8f0; }
+    .step-line { flex: 1; height: 2px; background: #e2e8f0; }
+    .step-line-done { background: #16a34a; }
+</style>
+
+<div class="container-fluid py-4 px-4">
+
+    <!-- Breadcrumb -->
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a asp-controller="AdminOrder" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <span class="text-muted small">Quản lý đơn hàng /</span>
+        <span class="fw-semibold">Đơn #@Model.Order_ID</span>
+        <span class="badge-status @statusClass ms-2">@Model.Trang_Thai_Don_Hang</span>
+    </div>
+
+    <!-- Cảnh báo TP.HCM -->
+    @if (hasTphcm)
+    {
+        <div class="alert rounded-4 border-0 mb-4 d-flex align-items-start gap-3"
+             style="background:#fff1f2; border-left: 4px solid #be123c !important;">
+            <i class="fas fa-location-exclamation fa-lg mt-1" style="color:#be123c;"></i>
+            <div>
+                <div class="fw-bold" style="color:#be123c;">⚠️ Đơn hàng có sản phẩm [CHỈ GIAO TẠI TP.HCM]</div>
+                <div class="small mt-1" style="color:#9f1239;">
+                    Vui lòng kiểm tra địa chỉ giao hàng trước khi xác nhận:
+                    <strong>@Model.Dia_Chi_Giao_Hang</strong>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Thông báo -->
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="alert alert-success rounded-4 border-0 mb-3 d-flex align-items-center gap-2">
+            <i class="fas fa-circle-check"></i> @ok
+        </div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="alert alert-danger rounded-4 border-0 mb-3">
+            <i class="fas fa-circle-xmark me-2"></i>@err
+        </div>
+    }
+    @if (TempData["StockErrors"] is string stockErr)
+    {
+        <div class="alert alert-warning rounded-4 border-0 mb-3">
+            <div class="fw-bold mb-1"><i class="fas fa-warehouse me-2"></i>Chi tiết tồn kho:</div>
+            @foreach (var line in stockErr.Split('\n'))
+            {
+                <div class="small">• @line</div>
+            }
+        </div>
+    }
+
+    <!-- Workflow progress -->
+    @{
+        var steps = new[] { "Chờ xác nhận", "Đang lấy hàng", "Đang giao", "Thành công" };
+        var currentIdx = Array.IndexOf(steps, Model.Trang_Thai_Don_Hang);
+        if (Model.Trang_Thai_Don_Hang == "Đã hủy") currentIdx = -1;
+    }
+    @if (Model.Trang_Thai_Don_Hang != "Đã hủy")
+    {
+        <div class="bg-white rounded-4 shadow-sm p-3 mb-4 d-flex align-items-center gap-2">
+            @for (int i = 0; i < steps.Length; i++)
+            {
+                string dotClass = i < currentIdx ? "step-done" : (i == currentIdx ? "step-current" : "step-future");
+                string labelColor = i < currentIdx ? "#16a34a" : (i == currentIdx ? "#f97316" : "#94a3b8");
+                <div class="d-flex align-items-center" style="flex:1;">
+                    <div class="text-center" style="flex:1;">
+                        <div class="workflow-dot @dotClass mx-auto mb-1"></div>
+                        <div style="font-size:0.72rem; color:@labelColor; font-weight:600;">@steps[i]</div>
+                    </div>
+                    @if (i < steps.Length - 1)
+                    {
+                        <div class="step-line @(i < currentIdx ? "step-line-done" : "")"></div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <div class="row g-4">
+
+        <!-- Trái: Chi tiết sản phẩm -->
+        <div class="col-lg-8">
+            <div class="info-card bg-white p-4 mb-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-box me-2 text-success"></i>Sản phẩm trong đơn</h5>
+
+                @foreach (var detail in Model.OrderDetails)
+                {
+                    bool isTphcm = detail.Product != null &&
+                        new[] { "tươi", "lạnh", "pizza", "mỳ ý", "xốt", "bằm", "phô mai" }
+                            .Any(kw => (detail.Product.Ten_San_Pham ?? "").ToLowerInvariant().Contains(kw));
+
+                    <div class="product-row">
+                        <img src="@(string.IsNullOrWhiteSpace(detail.Product?.Hinh_Anh) ? "/images/placeholder.png" : detail.Product.Hinh_Anh)"
+                             alt="@detail.Product?.Ten_San_Pham" class="product-thumb" />
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">
+                                @(detail.Product?.Ten_San_Pham ?? $"Sản phẩm #{detail.Product_ID}")
+                                @if (isTphcm)
+                                {
+                                    <span class="tphcm-badge ms-1">CHỈ GIAO TP.HCM</span>
+                                }
+                            </div>
+                            <div class="text-muted small">
+                                @detail.Gia_Ban.ToString("C0", culture) × @detail.So_Luong
+                                · Tồn kho hiện tại:
+                                <span class="@(detail.Product?.So_Luong_Ton <= 0 ? "text-danger fw-bold" : "text-success fw-semibold")">
+                                    @(detail.Product?.So_Luong_Ton ?? 0)
+                                </span>
+                            </div>
+                        </div>
+                        <div class="fw-bold text-success">
+                            @((detail.Gia_Ban * detail.So_Luong).ToString("C0", culture))
+                        </div>
+                    </div>
+                }
+
+                @{
+                    var tongGiaGoc = Model.OrderDetails.Sum(d => (d.Product?.Gia_Goc > d.Gia_Ban ? d.Product.Gia_Goc : d.Gia_Ban) * d.So_Luong);
+                    var tongTietKiem = Model.OrderDetails.Sum(d => (d.Product?.Gia_Goc > d.Gia_Ban ? d.Product.Gia_Goc - d.Gia_Ban : 0) * d.So_Luong);
+                    var tongThanhToan = tongGiaGoc - tongTietKiem - Model.Tien_Tiet_Kiem_Voucher + Model.Phi_Ship;
+                }
+
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Tổng tiền hàng gốc</span>
+                        <strong class="text-muted">@tongGiaGoc.ToString("C0", culture)</strong>
+                    </div>
+                    
+                    @if (tongTietKiem > 0)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-success small"><i class="fas fa-tags me-1"></i>Tiết kiệm từ Khuyến mãi</span>
+                            <span class="text-success">-@tongTietKiem.ToString("C0", culture)</span>
+                        </div>
+                    }
+
+                    @if (Model.Tien_Tiet_Kiem_Voucher > 0)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-success small"><i class="fas fa-ticket-alt me-1"></i>Voucher giảm giá</span>
+                            <span class="text-success">@("-" + Model.Tien_Tiet_Kiem_Voucher.ToString("C0", culture))</span>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <span class="text-muted small">Phí vận chuyển</span>
+                        <strong class="text-muted">@Model.Phi_Ship.ToString("C0", culture)</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Tổng thanh toán cuối cùng</span>
+                        <strong class="text-success fs-4 fw-bold">@tongThanhToan.ToString("C0", culture)</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phải: Info + Actions -->
+        <div class="col-lg-4">
+
+            <!-- Thông tin nhân viên -->
+            <div class="info-card bg-white p-4 mb-3">
+                <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.06em;">
+                    <i class="fas fa-user me-2"></i>Thông tin người đặt
+                </h6>
+                <dl style="line-height:2;" class="mb-0">
+                    <dt class="text-muted small fw-normal">Họ tên</dt>
+                    <dd class="fw-semibold">@(Model.User?.Ho_Ten ?? "—")</dd>
+                    <dt class="text-muted small fw-normal">Số điện thoại</dt>
+                    <dd>@(Model.User?.So_Dien_Thoai ?? "—")</dd>
+                    <dt class="text-muted small fw-normal">Địa chỉ giao hàng</dt>
+                    <dd>@Model.Dia_Chi_Giao_Hang</dd>
+                    @if (!string.IsNullOrWhiteSpace(Model.Ghi_Chu))
+                    {
+                        <dt class="text-muted small fw-normal">Ghi chú</dt>
+                        <dd class="fst-italic">@Model.Ghi_Chu</dd>
+                    }
+                    <dt class="text-muted small fw-normal">Ngày đặt</dt>
+                    <dd>@Model.Ngay_Dat.ToString("HH:mm - dd/MM/yyyy")</dd>
+                    @if (!string.IsNullOrWhiteSpace(Model.Ly_Do_Huy))
+                    {
+                        <dt class="text-muted small fw-normal text-danger">Lý do hủy</dt>
+                        <dd class="text-danger">@Model.Ly_Do_Huy</dd>
+                    }
+                </dl>
+            </div>
+
+            <!-- Hành động -->
+            <div class="info-card bg-white p-4">
+                <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.06em;">
+                    <i class="fas fa-sliders me-2"></i>Hành động
+                </h6>
+
+                @if (canConfirm)
+                {
+                    <form asp-controller="AdminOrder" asp-action="Confirm" method="post" class="mb-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@Model.Order_ID" />
+                        <button type="submit" class="btn btn-success action-btn w-100"
+                                onclick="return confirm('Xác nhận đơn #@Model.Order_ID? Tồn kho sẽ bị trừ ngay!')">
+                            <i class="fas fa-circle-check me-2"></i>Xác nhận & Trừ kho
+                        </button>
+                    </form>
+                }
+
+                @if (canMarkShipping)
+                {
+                    <form asp-controller="AdminOrder" asp-action="UpdateStatus" method="post" class="mb-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@Model.Order_ID" />
+                        <input type="hidden" name="newStatus" value="Đang giao" />
+                        <button type="submit" class="btn btn-primary action-btn w-100">
+                            <i class="fas fa-truck me-2"></i>Chuyển sang Đang giao
+                        </button>
+                    </form>
+                }
+
+                @if (canMarkComplete)
+                {
+                    <form asp-controller="AdminOrder" asp-action="UpdateStatus" method="post" class="mb-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@Model.Order_ID" />
+                        <input type="hidden" name="newStatus" value="Thành công" />
+                        <button type="submit" class="btn btn-info action-btn w-100 text-white">
+                            <i class="fas fa-box-open me-2"></i>Đánh dấu Hoàn thành
+                        </button>
+                    </form>
+                }
+
+                @if (canCancel)
+                {
+                    <button type="button" class="btn btn-outline-danger action-btn w-100 mt-1"
+                            data-bs-toggle="modal" data-bs-target="#cancelModal">
+                        <i class="fas fa-ban me-2"></i>Hủy đơn hàng
+                    </button>
+                }
+
+                @if (!canConfirm && !canMarkShipping && !canMarkComplete && !canCancel)
+                {
+                    <p class="text-muted small text-center mb-0">Đơn hàng đã hoàn tất — không còn thao tác nào.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal hủy đơn (Admin) -->
+@if (canCancel)
+{
+    <div class="modal fade" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-triangle-exclamation text-warning me-2"></i>
+                        Hủy đơn #@Model.Order_ID
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-controller="AdminOrder" asp-action="Cancel" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@Model.Order_ID" />
+                    <div class="modal-body">
+                        @if (Model.Trang_Thai_Don_Hang != "Chờ xác nhận")
+                        {
+                            <div class="alert alert-warning rounded-3 small mb-3">
+                                <i class="fas fa-rotate-left me-1"></i>
+                                Đơn đã được xử lý — <strong>tồn kho sẽ được hoàn lại</strong> khi hủy.
+                            </div>
+                        }
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Lý do hủy</label>
+                            <textarea name="lyDoHuy" class="form-control rounded-3" rows="3"
+                                      placeholder="Nhập lý do hủy đơn..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Quay lại</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">
+                            <i class="fas fa-ban me-1"></i>Xác nhận hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

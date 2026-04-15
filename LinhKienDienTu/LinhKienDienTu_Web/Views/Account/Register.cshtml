@@ -1,0 +1,73 @@
+@model LinhKienDienTu_Web.Models.RegisterViewModel
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow border-0 rounded-lg">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4 font-weight-bold" style="color: #0056b3;">Đăng ký tài khoản</h2>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <form asp-controller="Account" asp-action="Register" method="post">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Họ tên</label>
+                            <input asp-for="Ho_Ten" class="form-control" required placeholder="Họ và tên của bạn" />
+                            <span asp-validation-for="Ho_Ten" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Số điện thoại</label>
+                            <input asp-for="So_Dien_Thoai" class="form-control" required placeholder="090..." />
+                            <span asp-validation-for="So_Dien_Thoai" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input asp-for="Email" type="email" class="form-control" required placeholder="example@mail.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+                        <input asp-for="Mat_Khau" type="password" class="form-control" required minlength="6" placeholder="Tối thiểu 6 ký tự" />
+                        <span asp-validation-for="Mat_Khau" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary" style="background-color: #0056b3; border: none; padding: 12px;">ĐĂNG KÝ NGAY</button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+                <div class="text-center mb-3">Hoặc</div>
+                <form asp-controller="Account" asp-action="ExternalLogin" method="post" class="d-grid gap-2">
+                    <button type="submit" name="provider" value="Google" class="btn btn-outline-danger" style="padding: 10px;">
+                        <i class="fab fa-google me-2"></i>Đăng nhập bằng Google
+                    </button>
+                    <button type="submit" name="provider" value="Facebook" class="btn btn-outline-primary" style="padding: 10px;">
+                        <i class="fab fa-facebook-f me-2"></i>Đăng nhập bằng Facebook
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="mb-0">Đã có tài khoản? <a asp-action="Login" style="color: #0056b3; font-weight: bold;">Đăng nhập ngay</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

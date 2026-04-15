@@ -1,0 +1,166 @@
+@model Product
+
+@{
+    ViewData["Title"] = "Thêm sản phẩm";
+}
+
+<style>
+    .main-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        background: white;
+    }
+
+    .page-title {
+        color: #2e59d9;
+        font-weight: 700;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title mb-0">Thêm sản phẩm mới</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+    </div>
+
+    <div class="main-card p-4">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Ten_San_Pham" class="form-label">Tên sản phẩm</label>
+                <input asp-for="Ten_San_Pham" class="form-control" />
+                <span asp-validation-for="Ten_San_Pham" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Gia_Goc" class="form-label">Giá</label>
+                    <input asp-for="Gia_Goc" class="form-control" />
+                    <span asp-validation-for="Gia_Goc" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="So_Luong_Ton" class="form-label">Số lượng tồn</label>
+                    <input asp-for="So_Luong_Ton" class="form-control" />
+                    <span asp-validation-for="So_Luong_Ton" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Trang_Thai" class="form-label">Trạng thái</label>
+                    <input asp-for="Trang_Thai" class="form-control" />
+                    <span asp-validation-for="Trang_Thai" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="SubCategory_ID" class="form-label">Danh mục con</label>
+                    <select asp-for="SubCategory_ID" asp-items="ViewBag.SubCategories" class="form-select">
+                        <option value="">-- Chọn danh mục con --</option>
+                    </select>
+                    <span asp-validation-for="SubCategory_ID" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6 d-flex align-items-center">
+                    <div class="form-check form-switch p-0">
+                        <input asp-for="IsTphcmOnly" class="form-check-input ms-0" type="checkbox" style="width: 50px; height: 25px; cursor: pointer;">
+                        <label class="form-check-label ms-3 fw-bold text-danger" asp-for="IsTphcmOnly">
+                            <i class="fas fa-map-marker-alt me-1"></i> [CHỈ GIAO TẠI TP.HCM]
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex align-items-center">
+                    <div class="form-check form-switch p-0">
+                        <input asp-for="IsCombo" class="form-check-input ms-0" type="checkbox" style="width: 50px; height: 25px; cursor: pointer;" id="isComboCheckbox">
+                        <label class="form-check-label ms-3 fw-bold text-info" asp-for="IsCombo">
+                            <i class="fas fa-box-open me-1"></i> [SẢN PHẨM COMBO/THÙNG]
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="comboBuilder" style="display: none;" class="mb-4 p-3 border rounded bg-light">
+                <h5 class="fw-bold text-info mb-3"><i class="fas fa-layer-group me-2"></i>Thiết lập thành phần Combo</h5>
+                <p class="text-muted small">Chọn các sản phẩm lẻ và số lượng để cấu thành nên Combo này. Tồn kho Combo sẽ tự động tính theo thành phần.</p>
+                <div id="componentList">
+                    <!-- Component rows go here -->
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-info mt-2" onclick="addComponentRow()">
+                    <i class="fas fa-plus me-1"></i> Thêm thành phần
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <label for="imageFile" class="form-label">Hình ảnh (không bắt buộc)</label>
+                <input type="file" id="imageFile" name="imageFile" class="form-control" accept="image/*" />
+                <small class="text-muted">Bạn có thể bỏ qua mục này và vẫn lưu sản phẩm.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary px-4">Lưu sản phẩm</button>
+            <a asp-action="Index" class="btn btn-light border ms-2">Hủy</a>
+        </form>
+    </div>
+</div>
+
+<template id="componentTemplate">
+    <div class="row mb-2 component-row">
+        <div class="col-md-7">
+            <select name="ComponentIds" class="form-select select-product" required>
+                <option value="">-- Chọn sản phẩm thành phần --</option>
+                @foreach (var p in (IEnumerable<Product>)ViewBag.AllProducts)
+                {
+                    <option value="@p.Product_ID">@p.Ten_San_Pham (@p.So_Luong_Ton trong kho)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" name="ComponentQtys" class="form-control" placeholder="Số lượng" min="1" value="1" required />
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-danger w-100" onclick="removeRow(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const isComboCheckbox = document.getElementById('isComboCheckbox');
+        const comboBuilder = document.getElementById('comboBuilder');
+        const stockInput = document.querySelector('input[name="So_Luong_Ton"]');
+        const componentList = document.getElementById('componentList');
+        const componentTemplate = document.getElementById('componentTemplate');
+
+        isComboCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                comboBuilder.style.display = 'block';
+                stockInput.value = 0;
+                stockInput.readOnly = true;
+                stockInput.classList.add('bg-light');
+                if (componentList.children.length === 0) {
+                    addComponentRow();
+                }
+            } else {
+                comboBuilder.style.display = 'none';
+                stockInput.readOnly = false;
+                stockInput.classList.remove('bg-light');
+            }
+        });
+
+        function addComponentRow() {
+            const clone = componentTemplate.content.cloneNode(true);
+            componentList.appendChild(clone);
+        }
+
+        function removeRow(btn) {
+            btn.closest('.component-row').remove();
+            if (componentList.children.length === 0 && isComboCheckbox.checked) {
+                addComponentRow();
+            }
+        }
+    </script>
+}

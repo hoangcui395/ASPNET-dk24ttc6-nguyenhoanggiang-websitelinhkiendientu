@@ -1,0 +1,138 @@
+@model Promotion
+@using LinhKienDienTu_Web.Models
+@{
+    ViewData["Title"] = "Tạo khuyến mãi";
+    var allProducts = ViewBag.AllProducts as List<Product> ?? new();
+}
+
+<style>
+    .scope-tab-btn { border: 2px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.15s; background: #f8fafc; }
+    .scope-tab-btn.active { border-color: #0056b3; background: #f0fdf4; color: #15803d; }
+    .product-search-box { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.5rem 0.85rem; width: 100%; margin-bottom: 0.75rem; }
+    .product-list { max-height: 280px; overflow-y: auto; border: 1.5px solid #e2e8f0; border-radius: 10px; }
+    .product-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.85rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s; }
+    .product-item:hover { background: #f8fafc; }
+    .product-item:last-child { border-bottom: none; }
+    .product-item input[type=checkbox] { width: 17px; height: 17px; accent-color: #0056b3; }
+    .selected-count { font-size: 0.82rem; color: #64748b; margin-top: 0.5rem; }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold mb-0" style="color:#2e59d9;">Tạo khuyến mãi mới</h2>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius:16px;">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post" id="promoForm">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 rounded-3"></div>
+
+                <!-- Thông tin cơ bản -->
+                <h6 class="fw-bold text-muted mb-3 text-uppercase" style="font-size:0.75rem;letter-spacing:0.06em;">Thông tin khuyến mãi</h6>
+                <div class="mb-3">
+                    <label asp-for="Ten_Khuyen_Mai" class="form-label fw-semibold">Tên khuyến mãi</label>
+                    <input asp-for="Ten_Khuyen_Mai" class="form-control rounded-3" placeholder="Ví dụ: Sale Hè 2026" />
+                    <span asp-validation-for="Ten_Khuyen_Mai" class="text-danger small"></span>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label asp-for="Phan_Tram_Giam" class="form-label fw-semibold">Phần trăm giảm (%)</label>
+                        <input asp-for="Phan_Tram_Giam" class="form-control rounded-3" type="number" min="0" max="100" step="1" />
+                        <span asp-validation-for="Phan_Tram_Giam" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Ngay_Bat_Dau" class="form-label fw-semibold">Ngày bắt đầu</label>
+                        <input asp-for="Ngay_Bat_Dau" type="date" class="form-control rounded-3" />
+                        <span asp-validation-for="Ngay_Bat_Dau" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Ngay_Ket_Thuc" class="form-label fw-semibold">Ngày kết thúc</label>
+                        <input asp-for="Ngay_Ket_Thuc" type="date" class="form-control rounded-3" />
+                        <span asp-validation-for="Ngay_Ket_Thuc" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Phạm vi áp dụng -->
+                <h6 class="fw-bold text-muted mb-3 text-uppercase" style="font-size:0.75rem;letter-spacing:0.06em;">Phạm vi áp dụng <span class="text-muted fw-normal">(có thể kết hợp)</span></h6>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Áp dụng cho Danh mục chính</label>
+                        <select name="categoryId" class="form-select rounded-3">
+                            <option value="">-- Không chọn --</option>
+                            @foreach (var c in (IEnumerable<Category>)ViewBag.Categories)
+                            {
+                                <option value="@c.Category_ID">@c.Ten_Danh_Muc</option>
+                            }
+                        </select>
+                        <div class="form-text">Áp dụng cho toàn bộ sản phẩm trong danh mục</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Áp dụng cho Danh mục con</label>
+                        <select name="subCategoryId" class="form-select rounded-3">
+                            <option value="">-- Không chọn --</option>
+                            @foreach (var s in (IEnumerable<SubCategory>)ViewBag.SubCategories)
+                            {
+                                <option value="@s.SubCategory_ID">@s.Ten_Danh_Muc_Con</option>
+                            }
+                        </select>
+                        <div class="form-text">Ưu tiên hơn Danh mục chính nếu cùng chọn</div>
+                    </div>
+                </div>
+
+                <!-- Chọn sản phẩm cụ thể -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Chọn sản phẩm cụ thể <span class="text-muted fw-normal">(multi-select)</span></label>
+                    <input type="text" id="productSearch" class="product-search-box" placeholder="🔍 Tìm tên sản phẩm..." />
+                    <div class="product-list" id="productList">
+                        @foreach (var p in allProducts)
+                        {
+                            <label class="product-item" data-name="@p.Ten_San_Pham.ToLowerInvariant()">
+                                <input type="checkbox" name="productIds" value="@p.Product_ID" />
+                                <span class="flex-grow-1">@p.Ten_San_Pham</span>
+                                <span class="badge bg-light text-secondary border" style="font-size:0.7rem;">
+                                    @(p.SubCategory?.Ten_Danh_Muc_Con ?? "—")
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    <div class="selected-count">Đã chọn: <strong id="selectedCount">0</strong> sản phẩm</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                        <i class="fas fa-save me-2"></i>Lưu khuyến mãi
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Search sản phẩm
+        document.getElementById('productSearch').addEventListener('input', function () {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('#productList .product-item').forEach(item => {
+                item.style.display = item.dataset.name.includes(q) ? '' : 'none';
+            });
+        });
+
+        // Đếm sản phẩm đã chọn
+        function updateCount() {
+            const n = document.querySelectorAll('#productList input[type=checkbox]:checked').length;
+            document.getElementById('selectedCount').textContent = n;
+        }
+        document.querySelectorAll('#productList input[type=checkbox]').forEach(cb => {
+            cb.addEventListener('change', updateCount);
+        });
+    </script>
+}

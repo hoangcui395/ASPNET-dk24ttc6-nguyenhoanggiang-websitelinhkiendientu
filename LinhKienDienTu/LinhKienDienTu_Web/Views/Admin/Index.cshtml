@@ -1,0 +1,402 @@
+@model AdminAnalyticsViewModel
+@using LinhKienDienTu_Web.Models
+@{
+    ViewData["Title"] = "Quản trị thông minh (ERP)";
+    var range = ViewBag.Range as string ?? "7d";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header & Filter -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0" style="color:#2e59d9;">Linh Kiện Điện Tử HG Analytics</h2>
+            <p class="text-muted small mb-0">Hệ thống hỗ trợ ra quyết định thời gian thực</p>
+        </div>
+        <form method="get" class="d-flex gap-2">
+            <select name="range" class="form-select border-0 shadow-sm" onchange="this.form.submit()">
+                <option value="today" selected="@(range=="today")">Hôm nay</option>
+                <option value="7d" selected="@(range=="7d")">7 ngày qua</option>
+                <option value="14d" selected="@(range=="14d")">14 ngày qua</option>
+                <option value="30d" selected="@(range=="30d")">30 ngày qua</option>
+            </select>
+        </form>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- 1. Quick Stats Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Doanh thu thực tế</div>
+                    <div class="fs-3 fw-bold text-success">@Model.TotalRevenue.ToString("N0") <small style="font-size:0.6em">đ</small></div>
+                    <i class="fas fa-wallet position-absolute opacity-10" style="bottom: 10px; right: 10px; font-size: 3rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Chi phí Khuyến mãi</div>
+                    <div class="fs-3 fw-bold text-danger">@Model.TotalPromotionCost.ToString("N0") <small style="font-size:0.6em">đ</small></div>
+                    <i class="fas fa-tag position-absolute opacity-10" style="bottom: 10px; right: 10px; font-size: 3rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Đơn hàng mới</div>
+                    <div class="fs-3 fw-bold text-warning">@Model.PendingOrders</div>
+                    <i class="fas fa-clock position-absolute opacity-10" style="bottom: 10px; right: 10px; font-size: 3rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">Người dùng mới</div>
+                    <div class="fs-3 fw-bold text-primary">@Model.NewUsersCount</div>
+                    <i class="fas fa-user-plus position-absolute opacity-10" style="bottom: 10px; right: 10px; font-size: 3rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- 2. Financial Analytics (Promotion & Profit Margin) -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-chart-line text-primary me-2"></i> Phân tích Tài chính & Khuyến mãi</h5>
+                    <p class="text-muted small">So sánh doanh thu bán hàng và chi phí giảm giá từ các chương trình khuyến mãi</p>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <canvas id="financialChart" height="150"></canvas>
+                    <div class="alert alert-info border-0 shadow-sm rounded-4 mt-3 small mb-0">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        <strong>Nhận xét:</strong> 
+                        @if (Model.TotalPromotionCost > Model.TotalRevenue * 0.3m)
+                        {
+                            <span>Tỷ trọng khuyến mãi đang khá cao (>30%). Hãy cân nhắc điều chỉnh lại để bảo vệ biên lợi nhuận.</span>
+                        }
+                        else
+                        {
+                            <span>Hiệu quả khuyến mãi đang nằm trong ngưỡng an toàn. Quy mô doanh thu đang tăng trưởng ổn định.</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Stock Prediction (Out-of-stock Predictor) -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between">
+                    <h5 class="fw-bold mb-0">Dự báo Kho hàng</h5>
+                    <span class="badge bg-soft-danger text-danger rounded-pill">Thông minh</span>
+                </div>
+                <div class="card-body px-4">
+                    <div class="prediction-list" style="max-height: 400px; overflow-y: auto;">
+                        @foreach (var p in Model.StockPredictions)
+                        {
+                            <div class="d-flex align-items-center mb-3 p-2 rounded-3 @(p.RiskLevel == "Urgent" ? "bg-danger bg-opacity-10" : "bg-light")">
+                                <img src="@p.Image" style="width: 45px; height: 45px; object-fit: cover;" class="rounded-2 me-3" />
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="fw-bold text-truncate small">@p.ProductName</div>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <span class="badge @(p.RiskLevel == "Urgent" ? "bg-danger" : p.RiskLevel == "Medium" ? "bg-warning text-dark" : "bg-success") rounded-pill" style="font-size: 0.65em;">
+                                            @(p.RiskLevel == "Urgent" ? "Đứt gãy" : "Cảnh báo")
+                                        </span>
+                                        <span class="small text-muted" style="font-size: 0.75rem;">Còn: <strong>@p.DaysRemaining ngày</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (!Model.StockPredictions.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-check-circle text-success fs-1 mb-2"></i>
+                                <p class="text-muted small">Kho hàng đang ổn định</p>
+                            </div>
+                        }
+                    </div>
+                    <div class="mt-3 text-center">
+                        <a href="/Product" class="btn btn-sm btn-outline-primary px-4 rounded-pill">Quản lý kho</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- 2.5 Golden Hour Heatmap (The "Aha!" moment) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+            <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-magic me-2"></i> Khung giờ "vàng" (Heatmap)</h5>
+            <p class="text-muted small mb-0">Thời điểm khách hàng chốt đơn nhiều nhất trong tuần. Hãy tận dụng để chạy Flash Sale!</p>
+        </div>
+        <div class="card-body">
+            <div id="heatmapChart" style="min-height: 350px;"></div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- 3. Top Selling Products -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-trophy text-warning me-2"></i> Top sản phẩm bán chạy</h5>
+                    <p class="text-muted small mb-0">Dựa trên số lượng đã bán thành công</p>
+                </div>
+                <div class="card-body px-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover mb-0">
+                            <tbody>
+                                @foreach (var item in Model.TopSellingProducts)
+                                {
+                                    <tr>
+                                        <td class="ps-4" style="width: 60px;">
+                                            <img src="@item.Image" class="rounded-3" style="width: 48px; height: 48px; object-fit: cover;" />
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold small">@item.Name</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">ID: #@item.ProductId</div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="fw-bold">@item.TotalSold.ToString("N0")</div>
+                                            <div class="text-muted small">Đã bán</div>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <div class="text-success fw-bold">@item.TotalRevenue.ToString("N0") đ</div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Payment Distribution -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-credit-card text-info me-2"></i> Kênh Thanh toán</h5>
+                    <p class="text-muted small mb-0">Tỷ lệ sử dụng giữa các phương thức</p>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div id="paymentPieChart" style="width: 100%; max-width: 320px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Abandoned Carts Tracker -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-0"><i class="fas fa-shopping-basket text-warning me-2"></i> Giỏ hàng bị bỏ rơi (>24h)</h5>
+                <p class="text-muted small mb-0">Theo dõi khách hàng đã thêm sản phẩm nhưng chưa thanh toán</p>
+            </div>
+            <span class="badge bg-warning text-dark rounded-pill">@Model.AbandonedCartCount trường hợp</span>
+        </div>
+        <div class="card-body px-0">
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Khách hàng</th>
+                            <th>Sản phẩm điển hình</th>
+                            <th>Số lượng</th>
+                            <th>Giá trị ước tính</th>
+                            <th>Thời gian ngâm</th>
+                            <th class="text-center pe-4">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cart in Model.AbandonedCarts)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">@cart.UserName</div>
+                                    <div class="text-muted small">@cart.UserEmail</div>
+                                </td>
+                                <td>
+                                    <span class="text-truncate d-inline-block small" style="max-width: 250px;">
+                                        @string.Join(", ", cart.ProductNames)...
+                                    </span>
+                                </td>
+                                <td>@cart.ItemCount món</td>
+                                <td class="fw-bold text-success">@cart.TotalValue.ToString("N0") đ</td>
+                                <td>
+                                    <span class="text-muted small">@((DateTime.Now - cart.LastUpdated).TotalHours.ToString("N0")) giờ trước</span>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <form asp-action="SendReminder" method="post" class="d-inline">
+                                        <input type="hidden" name="userId" value="@cart.UserId" />
+                                        <button type="submit" class="btn btn-sm btn-soft-primary rounded-pill px-3">
+                                            <i class="fas fa-paper-plane me-1"></i> Nhắc nhở
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.AbandonedCarts.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    Không có giỏ hàng nào bị bỏ rơi quá 24h.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-soft-danger { background-color: #fce8e6; }
+    .btn-soft-primary { background-color: #e8ebf3; color: #2e59d9; border: none; }
+    .btn-soft-primary:hover { background-color: #2e59d9; color: white; }
+    .prediction-list::-webkit-scrollbar { width: 5px; }
+    .prediction-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const financialCtx = document.getElementById('financialChart');
+            if (financialCtx) {
+                const chartData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueChartData));
+                
+                new Chart(financialCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.map(x => x.Label),
+                        datasets: [
+                            {
+                                label: 'Doanh thu (Thu thực tế)',
+                                data: chartData.map(x => x.Revenue),
+                                backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                                borderRadius: 6,
+                                type: 'bar'
+                            },
+                            {
+                                label: 'Chi phí Khuyến mãi',
+                                data: chartData.map(x => x.PromoCost),
+                                backgroundColor: 'rgba(231, 74, 59, 0.6)',
+                                borderRadius: 6,
+                                type: 'bar'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.parsed.y.toLocaleString('vi-VN') + ' đ';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) { return value.toLocaleString('vi-VN') + ' đ'; }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- Heatmap logic ---
+            const heatmapPoints = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.HeatmapChartData));
+            const days = ["CN", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+            
+            // Prepare data for ApexCharts Heatmap (Series per Day)
+            const heatmapSeries = days.map((dayName, dayIdx) => {
+                const data = [];
+                for (let hour = 0; hour < 24; hour++) {
+                    const point = heatmapPoints.find(p => p.Day === dayIdx && p.Hour === hour);
+                    data.push({
+                        x: hour + 'h',
+                        y: point ? point.Count : 0
+                    });
+                }
+                return { name: dayName, data: data };
+            }).reverse();
+
+            const heatmapOptions = {
+                series: heatmapSeries,
+                chart: { height: 350, type: 'heatmap', toolbar: { show: false } },
+                dataLabels: { enabled: false },
+                colors: ["#2e59d9"],
+                title: { text: '', align: 'left' },
+                xaxis: { type: 'category' },
+                plotOptions: {
+                    heatmap: {
+                        shadeIntensity: 0.5,
+                        radius: 5,
+                        useFillColorAsStroke: true,
+                        colorScale: {
+                            ranges: [
+                                { from: 0, to: 0, color: '#f8f9fc', name: 'Trống' },
+                                { from: 1, to: 3, color: '#e8ebf3', name: 'Thấp' },
+                                { from: 4, to: 10, color: '#bac8ed', name: 'Trung bình' },
+                                { from: 11, to: 1000, color: '#2e59d9', name: 'Cao' }
+                            ]
+                        }
+                    }
+                }
+            };
+
+            new ApexCharts(document.querySelector("#heatmapChart"), heatmapOptions).render();
+
+            // --- Payment Pie Chart logic ---
+            const paymentData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PaymentStats));
+            const pieOptions = {
+                series: paymentData.map(x => x.Count),
+                labels: paymentData.map(x => x.MethodName),
+                chart: { type: 'donut', height: 300 },
+                colors: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                legend: { position: 'bottom' },
+                dataLabels: { enabled: true, formatter: (val) => val.toFixed(0) + '%' },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '70%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Tổng đơn',
+                                    formatter: () => paymentData.reduce((a, b) => a + b.Count, 0)
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            new ApexCharts(document.querySelector("#paymentPieChart"), pieOptions).render();
+        });
+    </script>
+}

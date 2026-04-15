@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = "Đăng nhập";
+    var registerSuccess = TempData["RegisterSuccess"] as string;
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow border-0 rounded-lg">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4 font-weight-bold" style="color: #0056b3;">Đăng nhập</h2>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                @if (TempData["CheckoutSuccess"] != null)
+                {
+                    <div class="alert alert-success">
+                        @TempData["CheckoutSuccess"]
+                    </div>
+                }
+
+                <form asp-controller="Account" asp-action="Login" method="post">
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required placeholder="Nhập email của bạn" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label mb-0">Mật khẩu</label>
+                            <a asp-action="ForgotPassword" class="small text-decoration-none" style="color: #0056b3;">Quên mật khẩu?</a>
+                        </div>
+                        <input type="password" name="password" class="form-control mt-1" required placeholder="Nhập mật khẩu" />
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary" style="background-color: #0056b3; border: none; padding: 12px;">ĐĂNG NHẬP</button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+                <form asp-controller="Account" asp-action="ExternalLogin" method="post" class="d-grid gap-2">
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                    <button type="submit" name="provider" value="Google" class="btn btn-outline-danger" style="padding: 10px;">
+                        <i class="fab fa-google me-2"></i>Đăng nhập bằng Google
+                    </button>
+                    <button type="submit" name="provider" value="Facebook" class="btn btn-outline-primary" style="padding: 10px;">
+                        <i class="fab fa-facebook-f me-2"></i>Đăng nhập bằng Facebook
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="mb-0">Chưa có tài khoản? <a asp-action="Register" style="color: #0056b3; font-weight: bold;">Đăng ký ngay</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(registerSuccess))
+{
+    <div class="modal fade" id="registerSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success fa-3x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Đăng ký thành công</h4>
+                    <p class="text-muted mb-0">@registerSuccess</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @if (!string.IsNullOrWhiteSpace(registerSuccess))
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const modalElement = document.getElementById('registerSuccessModal');
+                if (!modalElement) {
+                    return;
+                }
+
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+
+                setTimeout(() => {
+                    modal.hide();
+                }, 2200);
+            });
+        </script>
+    }
+}

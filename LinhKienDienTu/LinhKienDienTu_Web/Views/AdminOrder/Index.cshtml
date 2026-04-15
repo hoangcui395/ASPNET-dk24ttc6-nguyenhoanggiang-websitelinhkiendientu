@@ -1,0 +1,174 @@
+@model List<LinhKienDienTu_Web.Models.Order>
+@using System.Globalization
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+    var culture = new CultureInfo("vi-VN");
+    string? currentStatus = ViewBag.CurrentStatus as string;
+}
+
+<style>
+    .stat-card { border: none; border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.85rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.15s; cursor: pointer; text-decoration: none !important; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .badge-status { font-size: 0.78rem; padding: 0.35em 0.85em; border-radius: 50rem; font-weight: 700; display: inline-block; }
+    .s-cho      { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+    .s-xacnhan  { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .s-giao     { background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; }
+    .s-hoan     { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; }
+    .s-huy      { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+    .filter-pill { padding: 0.35rem 1rem; border-radius: 50rem; font-size: 0.82rem; font-weight: 600; border: 1.5px solid #e2e8f0; color: #64748b; background: white; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+    .filter-pill:hover, .filter-pill.active { border-color: #0056b3; background: #f0fdf4; color: #15803d; }
+    .order-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 700; border-bottom: 2px solid #f1f5f9; }
+    .order-table td { vertical-align: middle; border-color: #f8fafc; }
+    .order-table tr:hover td { background: #fafffe; }
+    .btn-view { background: #0056b3; color: white; border: none; border-radius: 50rem; padding: 0.3rem 0.9rem; font-size: 0.82rem; font-weight: 600; transition: background 0.15s; text-decoration: none; display: inline-block; }
+    .btn-view:hover { background: #55aa00; color: white; }
+</style>
+
+<div class="container-fluid py-4 px-4">
+
+    @* Alert thông báo *@
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="alert alert-success rounded-4 border-0 mb-3 d-flex align-items-center gap-2">
+            <i class="fas fa-circle-check"></i> @ok
+        </div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="alert alert-danger rounded-4 border-0 mb-3">
+            <i class="fas fa-circle-xmark me-2"></i>@err
+        </div>
+    }
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Quản lý đơn hàng</h2>
+            <p class="text-muted small mb-0">Duyệt đơn, cập nhật trạng thái và quản lý tồn kho tự động.</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2-4">
+            <a asp-action="Index" asp-route-status="Chờ xác nhận" class="stat-card d-flex bg-white @(currentStatus == "Chờ xác nhận" ? "border border-warning" : "")">
+                <div class="stat-icon" style="background:#fff7ed;"><i class="fas fa-clock" style="color:#f97316;"></i></div>
+                <div><div class="fw-bold fs-5">@ViewBag.CountCho</div><div class="text-muted" style="font-size:0.78rem;">Chờ xác nhận</div></div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2-4">
+            <a asp-action="Index" asp-route-status="Đang lấy hàng" class="stat-card d-flex bg-white @(currentStatus == "Đang lấy hàng" ? "border border-primary" : "")">
+                <div class="stat-icon" style="background:#eff6ff;"><i class="fas fa-box" style="color:#2563eb;"></i></div>
+                <div><div class="fw-bold fs-5">@ViewBag.CountXacNhan</div><div class="text-muted" style="font-size:0.78rem;">Đang lấy hàng</div></div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2-4">
+            <a asp-action="Index" asp-route-status="Đang giao" class="stat-card d-flex bg-white @(currentStatus == "Đang giao" ? "border border-info" : "")">
+                <div class="stat-icon" style="background:#f0f9ff;"><i class="fas fa-truck" style="color:#0284c7;"></i></div>
+                <div><div class="fw-bold fs-5">@ViewBag.CountGiao</div><div class="text-muted" style="font-size:0.78rem;">Đang giao</div></div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2-4">
+            <a asp-action="Index" asp-route-status="Thành công" class="stat-card d-flex bg-white @(currentStatus == "Thành công" ? "border border-success" : "")">
+                <div class="stat-icon" style="background:#f0fdf4;"><i class="fas fa-circle-check" style="color:#16a34a;"></i></div>
+                <div><div class="fw-bold fs-5">@ViewBag.CountHoan</div><div class="text-muted" style="font-size:0.78rem;">Thành công</div></div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2-4">
+            <a asp-action="Index" asp-route-status="Đã hủy" class="stat-card d-flex bg-white @(currentStatus == "Đã hủy" ? "border border-danger" : "")">
+                <div class="stat-icon" style="background:#fef2f2;"><i class="fas fa-ban" style="color:#dc2626;"></i></div>
+                <div><div class="fw-bold fs-5">@ViewBag.CountHuy</div><div class="text-muted" style="font-size:0.78rem;">Đã hủy</div></div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <a asp-action="Index" class="filter-pill @(currentStatus == null ? "active" : "")">Tất cả</a>
+        <a asp-action="Index" asp-route-status="Chờ xác nhận" class="filter-pill @(currentStatus == "Chờ xác nhận" ? "active" : "")">Chờ xác nhận</a>
+        <a asp-action="Index" asp-route-status="Đang lấy hàng" class="filter-pill @(currentStatus == "Đang lấy hàng" ? "active" : "")">Đang lấy hàng</a>
+        <a asp-action="Index" asp-route-status="Đang giao" class="filter-pill @(currentStatus == "Đang giao" ? "active" : "")">Đang giao</a>
+        <a asp-action="Index" asp-route-status="Thành công" class="filter-pill @(currentStatus == "Thành công" ? "active" : "")">Thành công</a>
+        <a asp-action="Index" asp-route-status="Đã hủy" class="filter-pill @(currentStatus == "Đã hủy" ? "active" : "")">Đã hủy</a>
+
+        <!-- Search đa năng -->
+        <form asp-action="Index" method="get" class="ms-auto d-flex gap-2">
+            <input type="hidden" name="status" value="@currentStatus" />
+            <div class="input-group input-group-sm">
+                <input type="text" name="search" value="@ViewBag.CurrentSearch" placeholder="Mã đơn, tên, SĐT..."
+                       class="form-control rounded-start-pill px-3" style="width:200px;" />
+                <button type="submit" class="btn btn-success rounded-end-pill px-3">
+                    <i class="fas fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-4 shadow-sm overflow-hidden">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                Không tìm thấy đơn hàng nào.
+            </div>
+        }
+        else
+        {
+            <table class="table order-table mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Địa chỉ giao</th>
+                        <th>Ngày đặt</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-center pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        string sc = o.Trang_Thai_Don_Hang switch {
+                            "Chờ xác nhận" => "s-cho",
+                            "Đang lấy hàng" => "s-xacnhan",
+                            "Đang giao" => "s-giao",
+                            "Thành công" => "s-hoan",
+                            _ => "s-huy"
+                        };
+                        <tr>
+                            <td class="ps-4 fw-bold">#@o.Order_ID</td>
+                            <td>
+                                <div class="fw-semibold">@(o.User?.Ho_Ten ?? "—")</div>
+                                <div class="text-muted small">@(o.User?.So_Dien_Thoai ?? "")</div>
+                            </td>
+                            <td class="small text-muted" style="max-width:200px;">
+                                <span class="d-inline-block text-truncate" style="max-width:190px;">@o.Dia_Chi_Giao_Hang</span>
+                            </td>
+                            <td class="small">@o.Ngay_Dat.ToString("dd/MM/yy HH:mm")</td>
+                            @{
+                                var tongGiaGoc = o.OrderDetails?.Sum(d => (d.Product?.Gia_Goc > d.Gia_Ban ? d.Product.Gia_Goc : d.Gia_Ban) * d.So_Luong) ?? 0;
+                                var tongTietKiem = (o.OrderDetails?.Sum(d => (d.Product?.Gia_Goc > d.Gia_Ban ? d.Product.Gia_Goc - d.Gia_Ban : 0) * d.So_Luong) ?? 0) + o.Tien_Tiet_Kiem_Voucher;
+                                var displayTotal = tongGiaGoc - tongTietKiem + o.Phi_Ship;
+                            }
+                            <td class="text-end">
+                                <div class="fw-semibold text-success">@displayTotal.ToString("C0", culture)</div>
+                                @if (tongTietKiem > 0)
+                                {
+                                    <div class="text-muted" style="font-size: 0.65rem;">Giảm: @tongTietKiem.ToString("C0", culture)</div>
+                                }
+                            </td>
+                            <td class="text-center"><span class="badge-status @sc">@o.Trang_Thai_Don_Hang</span></td>
+                            <td class="text-center pe-4">
+                                <a asp-controller="AdminOrder" asp-action="Detail" asp-route-id="@o.Order_ID"
+                                   class="btn-view">Xem</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

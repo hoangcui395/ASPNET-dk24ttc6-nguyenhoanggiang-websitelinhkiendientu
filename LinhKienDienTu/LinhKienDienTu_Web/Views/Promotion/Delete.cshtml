@@ -1,0 +1,20 @@
+@model Promotion
+@{
+    ViewData["Title"] = "Xóa khuyến mãi";
+}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4 text-danger">Xóa khuyến mãi</h2>
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+        <div class="card-body p-4">
+            <div class="alert alert-danger">
+                Bạn có chắc muốn xóa chương trình <strong>@Model.Ten_Khuyen_Mai</strong>?
+            </div>
+            <p><strong>Số sản phẩm đang áp dụng:</strong> @ViewBag.ProductCount</p>
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Promotion_ID" />
+                <button type="submit" class="btn btn-danger px-4">Xóa</button>
+                <a asp-action="Index" class="btn btn-light border ms-2">Hủy</a>
+            </form>
+        </div>
+    </div>
+</div>

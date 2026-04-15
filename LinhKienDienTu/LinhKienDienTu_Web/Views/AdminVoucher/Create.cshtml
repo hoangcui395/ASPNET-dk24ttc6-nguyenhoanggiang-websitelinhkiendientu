@@ -1,0 +1,88 @@
+@model LinhKienDienTu_Web.Models.Voucher
+@{
+    ViewData["Title"] = Model?.Voucher_ID > 0 ? "Sửa Voucher" : "Tạo Voucher";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">@ViewData["Title"]</h2>
+                <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Quay lại</a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+                <form asp-action="@(Model?.Voucher_ID > 0 ? "Edit" : "Create")" method="post">
+                    @if (Model?.Voucher_ID > 0)
+                    {
+                        <input type="hidden" asp-for="Voucher_ID" />
+                    }
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label asp-for="Ma_Code" class="form-label small fw-bold text-uppercase">Mã Code (Ví dụ: SGF10K)</label>
+                            <input asp-for="Ma_Code" class="form-control" placeholder="Nhập mã code..." required />
+                            <span asp-validation-for="Ma_Code" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Loai_Giam_Gia" class="form-label small fw-bold text-uppercase">Loại giảm giá</label>
+                            <select asp-for="Loai_Giam_Gia" class="form-select">
+                                <option value="PERCENT">Phần trăm (%)</option>
+                                <option value="AMOUNT">Trừ tiền mặt (đ)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Gia_Tri_Giam" class="form-label small fw-bold text-uppercase">Giá trị giảm</label>
+                            <input asp-for="Gia_Tri_Giam" class="form-control" type="number" required />
+                            <span asp-validation-for="Gia_Tri_Giam" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Don_Toi_Thieu" class="form-label small fw-bold text-uppercase">Giá trị đơn tối thiểu (đ)</label>
+                            <input asp-for="Don_Toi_Thieu" class="form-control" type="number" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="So_Luong_Gioi_Han" class="form-label small fw-bold text-uppercase">Số lượng giới hạn (lượt)</label>
+                            <input asp-for="So_Luong_Gioi_Han" class="form-control" type="number" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase">Số lượng đã dùng</label>
+                            <input asp-for="So_Luong_Da_Dung" class="form-control" type="number" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Ngay_Bat_Dau" class="form-label small fw-bold text-uppercase">Ngày bắt đầu</label>
+                            <input asp-for="Ngay_Bat_Dau" class="form-control" type="datetime-local" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Ngay_Het_Han" class="form-label small fw-bold text-uppercase">Ngày hết hạn</label>
+                            <input asp-for="Ngay_Het_Han" class="form-control" type="datetime-local" />
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" asp-for="Trang_Thai">
+                                <label class="form-check-label ms-2" asp-for="Trang_Thai">Kích hoạt Voucher này ngay lập tức</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm">
+                                <i class="fas fa-save me-2"></i>Lưu thông tin Voucher
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

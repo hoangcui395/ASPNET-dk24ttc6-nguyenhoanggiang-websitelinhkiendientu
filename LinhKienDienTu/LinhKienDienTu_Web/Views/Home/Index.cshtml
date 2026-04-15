@@ -1,0 +1,105 @@
+@model IEnumerable<Product>
+@using LinhKienDienTu_Web.Models
+@{
+    ViewData["Title"] = "Trang chủ";
+    var categories = ViewData["Categories"] as List<Category>;
+}
+
+<div class="hero-section text-center">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mx-auto">
+                <h1 class="display-3 fw-bold mb-4" style="color: #0056b3;">Linh Kiện Cho Dự Án Của Bạn</h1>
+                <p class="lead text-muted mb-5">Cung cấp module, IC, cảm biến và phụ kiện chất lượng cho hobbyist và dự án chuyên nghiệp.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="#featured-products" class="btn btn-danger btn-lg rounded-pill px-5 py-3 shadow-lg" style="background-color: #0056b3; border: none;">MUA NGAY</a>
+                    <a href="#featured-products" class="btn btn-outline-success btn-lg rounded-pill px-5 py-3 shadow-sm fw-bold">KHÁM PHÁ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5" id="featured-products">
+    @if (ViewBag.FilterName != null)
+    {
+        <div class="filter-header mb-4 p-4 rounded-4 shadow-sm" style="background: white; border-left: 6px solid #0056b3;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="text-muted small text-uppercase mb-1">@ViewBag.FilterType</h5>
+                    <h2 class="fw-bold mb-0">@ViewBag.FilterName</h2>
+                </div>
+                <a href="/Home/Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="fas fa-times me-1"></i> Xóa bộ lọc
+                </a>
+            </div>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 bg-white rounded-4 shadow-sm mb-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Không tìm thấy sản phẩm nào trong danh mục này.</p>
+                <a href="/Home/Index" class="btn btn-success rounded-pill px-4">Xem tất cả sản phẩm</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4 mb-5">
+                @foreach (var product in Model)
+                {
+                    <div class="col-sm-6 col-md-4 col-lg-3">
+                        <partial name="_ProductCard" model="product" />
+                    </div>
+                }
+            </div>
+        }
+    }
+    else if (categories != null)
+    {
+        foreach (var category in categories)
+        {
+            var categoryProducts = Model.Where(p => p.SubCategory?.Category_ID == category.Category_ID).Take(4).ToList();
+            if (categoryProducts.Any())
+            {
+                <div class="category-block mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="fw-bold m-0" style="border-left: 6px solid #0056b3; padding-left: 15px;">
+                            @category.Ten_Danh_Muc
+                        </h2>
+                        <a href="/Home/Index?categoryId=@category.Category_ID" class="text-danger fw-bold text-decoration-none hover-underline">Xem tất cả <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
+
+                    <div class="row g-4">
+                        @foreach (var product in categoryProducts)
+                        {
+                            <div class="col-sm-6 col-md-4 col-lg-3">
+                                <partial name="_ProductCard" model="product" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-basket fa-3x text-muted mb-3"></i>
+            <p class="text-muted">Đang tải dữ liệu sản phẩm...</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+}

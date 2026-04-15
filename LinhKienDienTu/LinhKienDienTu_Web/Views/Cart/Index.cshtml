@@ -1,0 +1,396 @@
+@model CartIndexViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Giỏ hàng";
+    var culture = new CultureInfo("vi-VN");
+}
+
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Giỏ hàng của bạn</h1>
+            <p class="text-muted mb-0">Kiểm tra số lượng, tổng tiền và tùy chọn thanh toán từng phần.</p>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Tiếp tục mua sắm</a>
+    </div>
+
+    @if (TempData["CartMessage"] is string cartMessage)
+    {
+        <div class="alert alert-warning rounded-4">@cartMessage</div>
+    }
+
+    @if (TempData["Error"] is string errorMsg)
+    {
+        <div class="alert alert-danger rounded-4">@errorMsg</div>
+    }
+
+    @if (TempData["CheckoutSuccess"] is string checkoutSuccess)
+    {
+        <div class="alert alert-success rounded-4">@checkoutSuccess</div>
+    }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="cart-empty text-center py-5 px-4 bg-white rounded-4 shadow-sm">
+            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+            <h3 class="fw-bold">Giỏ hàng đang trống</h3>
+            <p class="text-muted mb-4">Hãy thêm một vài món ngon để bắt đầu đơn hàng mới.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-success rounded-pill px-4">Xem sản phẩm</a>
+        </div>
+    }
+    else
+    {
+        <!-- Form bọc toàn bộ giỏ hàng để gửi các item được chọn -->
+        <form asp-controller="Cart" asp-action="CheckoutSelected" method="post" id="cartForm">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="bg-white rounded-4 shadow-sm p-3 p-md-4">
+                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                            <input type="checkbox" id="selectAll" class="form-check-input me-3" style="width: 20px; height: 20px;" checked />
+                            <label for="selectAll" class="fw-bold fs-5 mb-0 cursor-pointer">Chọn tất cả sản phẩm</label>
+                        </div>
+                        
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="cart-item-row d-flex flex-column flex-md-row align-items-md-center gap-3 py-3 border-bottom" data-product-id="@item.ProductId">
+                                <div class="d-flex align-items-center">
+                                    <input type="checkbox" name="selectedProductIds" value="@item.ProductId" class="form-check-input item-select me-3" checked 
+                                           data-giagoc="@item.OriginalPrice" 
+                                           data-giaban="@item.Price" 
+                                           data-soluong="@item.Quantity"
+                                           data-istphcm="@item.IsTphcmOnly.ToString().ToLower()"
+                                           style="width: 20px; height: 20px; cursor: pointer;" />
+                                    
+                                    <div class="cart-item-media" style="cursor: pointer;" onclick="window.location.href='/Home/Details/@item.ProductId'">
+                                        <img src="@(string.IsNullOrWhiteSpace(item.Image) ? "/images/placeholder.png" : item.Image)" alt="@item.Name" class="cart-item-image rounded shadow-sm border" style="width: 80px; height: 80px; object-fit: cover;" />
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="fw-bold mb-1" style="cursor: pointer;" onclick="window.location.href='/Home/Details/@item.ProductId'">@item.Name</h5>
+                                    
+                                    <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+                                        @if (item.OriginalPrice > item.Price)
+                                        {
+                                            <span class="text-danger fw-bold fs-5">@item.Price.ToString("C0", culture)</span>
+                                            <span class="text-muted text-decoration-line-through small">@item.OriginalPrice.ToString("C0", culture)</span>
+                                        }
+                                        else 
+                                        {
+                                            <span class="text-danger fw-bold fs-5">@item.Price.ToString("C0", culture)</span>
+                                        }
+                                    </div>
+                                    <div class="d-flex gap-2 mt-1">
+                                        <span class="text-muted small">Tồn kho: @item.AvailableStock</span>
+                                        @if (item.IsTphcmOnly)
+                                        {
+                                            <span class="badge" style="background-color: #fff3cd; color: #856404; font-size: 0.75rem;"><i class="fas fa-map-marker-alt me-1"></i>Chỉ giao TP.HCM</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3 mt-3 mt-md-0">
+                                    <div class="quantity-selector">
+                                        <button class="quantity-btn" type="button" onclick="changeCartQty(@item.ProductId, -1)">-</button>
+                                        <input id="qty-@item.ProductId" class="quantity-input" type="number" value="@item.Quantity" min="1" max="@item.AvailableStock" readonly />
+                                        <button class="quantity-btn" type="button" onclick="changeCartQty(@item.ProductId, 1)">+</button>
+                                    </div>
+                                    <div class="text-end" style="min-width: 120px;">
+                                        <div class="fw-bold text-success fs-5 item-linetotal">@item.LineTotal.ToString("C0", culture)</div>
+                                        <button class="btn btn-link text-danger p-0 mt-1 ext-decoration-none small" type="button" onclick="removeCartItem(@item.ProductId)"><i class="fas fa-trash me-1"></i>Xóa</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="bg-white rounded-4 shadow-sm p-4 cart-summary-card position-sticky" style="top: 20px;">
+                        <h4 class="fw-bold mb-4">Thanh toán</h4>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tổng tiền hàng (<span id="selected-count">0</span> sp)</span>
+                            <strong id="tongTienGoc">0 ₫</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                            <span class="text-success"><i class="fas fa-tags me-1"></i>Tiết kiệm</span>
+                            <strong class="text-success" id="tongTienGiam">-0 ₫</strong>
+                        </div>
+                        <div class="mb-3 pt-3 border-top">
+                            <label class="form-label fw-semibold text-muted">Mã giảm giá</label>
+                            <div class="input-group">
+                                <input type="text" id="voucherInput" name="InputVoucherCode" class="form-control" placeholder="Nhập mã giảm giá..." />
+                                <button class="btn btn-outline-success" type="button" id="btnApplyVoucher">Áp dụng</button>
+                            </div>
+                            <small id="voucherMessage" class="d-block mt-1"></small>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-4 mt-3">
+                            <span class="fw-bold fs-5">Tạm tính</span>
+                            <strong class="text-danger fw-bold fs-4" id="thanhTienPhaiTra">0 ₫</strong>
+                        </div>
+                        
+                        <div id="tphcm-warning" class="alert mt-3 mb-4 border-0 d-none" style="background-color: #fff3cd; color: #856404; font-size: 0.85rem; border-radius: 10px;">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Có sản phẩm tươi/lạnh yêu cầu giao tại nội thành TP.HCM.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger w-100 rounded-pill py-3 fw-bold fs-5 shadow-sm" id="btnCheckout" disabled>MUA HÀNG</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        const cartCulture = 'vi-VN';
+        const cartCurrency = 'VND';
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat(cartCulture, {
+                style: 'currency',
+                currency: cartCurrency,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        // Logic Selective Checkout tính toán realtime
+        const selectAllCb = document.getElementById('selectAll');
+        const itemCbs = document.querySelectorAll('.item-select');
+        const btnCheckout = document.getElementById('btnCheckout');
+        const tphcmWarning = document.getElementById('tphcm-warning');
+
+        function calculateSelectedTotal() {
+            let tongGoc = 0;
+            let thanhTien = 0;
+            let countSelected = 0;
+            let hasTphcmOnly = false;
+
+            const allItemCbs = document.querySelectorAll('.item-select'); // Get fresh elements
+            allItemCbs.forEach(cb => {
+                if (cb.checked) {
+                    let giaGoc = parseFloat(cb.dataset.giagoc) || 0;
+                    let giaBan = parseFloat(cb.dataset.giaban) || 0;
+                    let soLuong = parseInt(cb.dataset.soluong) || 0;
+                    let isTphcm = cb.dataset.istphcm === 'true';
+
+                    tongGoc += (giaGoc * soLuong);
+                    thanhTien += (giaBan * soLuong);
+                    countSelected += soLuong;
+                    
+                    if (isTphcm) hasTphcmOnly = true;
+                }
+            });
+
+            let tienTietKiem = tongGoc - thanhTien;
+
+            // Update UI
+            document.getElementById('selected-count').textContent = countSelected;
+            document.getElementById('tongTienGoc').textContent = formatCurrency(tongGoc);
+            document.getElementById('tongTienGiam').textContent = `-${formatCurrency(tienTietKiem)}`;
+            document.getElementById('thanhTienPhaiTra').textContent = formatCurrency(thanhTien);
+            
+            if (hasTphcmOnly) {
+                tphcmWarning.classList.remove('d-none');
+            } else {
+                tphcmWarning.classList.add('d-none');
+            }
+
+            btnCheckout.disabled = countSelected <= 0;
+            
+            // Check if all are selected to sync selectAllCb
+            if (selectAllCb) {
+                selectAllCb.checked = allItemCbs.length > 0 && Array.from(allItemCbs).every(i => i.checked);
+            }
+        }
+
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', function() {
+                const allItemCbs = document.querySelectorAll('.item-select');
+                allItemCbs.forEach(cb => cb.checked = this.checked);
+                calculateSelectedTotal();
+            });
+        }
+
+        function initCheckboxes() {
+            const allItemCbs = document.querySelectorAll('.item-select');
+            allItemCbs.forEach(cb => {
+                cb.addEventListener('change', calculateSelectedTotal);
+            });
+            calculateSelectedTotal();
+        }
+
+        function checkVoucherUpdate() {
+            const voucherInputVal = document.getElementById('voucherInput').value;
+            if (voucherInputVal) {
+                // Trigger apply again or just keep current applied data
+            }
+        }
+
+        // Initialize first calc
+        initCheckboxes();
+
+        let appliedVoucher = { type: null, value: 0, code: '' };
+
+        document.getElementById('btnApplyVoucher')?.addEventListener('click', async function() {
+            const code = document.getElementById('voucherInput').value.trim();
+            const msgEl = document.getElementById('voucherMessage');
+            if(!code) {
+                msgEl.textContent = 'Vui lòng nhập mã!';
+                msgEl.className = 'd-block mt-1 text-danger';
+                return;
+            }
+
+            try {
+                const response = await fetch('/Cart/ApplyVoucher', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(code)
+                });
+                const data = await response.json();
+                
+                if(data.success) {
+                    msgEl.textContent = data.message + ` (Giảm ${data.type == 'PERCENT' ? data.value + '%' : formatCurrency(data.value)})`;
+                    msgEl.className = 'd-block mt-1 text-success fw-bold';
+                    appliedVoucher = { type: data.type, value: data.value, code: code };
+                    calculateSelectedTotal(); // Recalculate
+                } else {
+                    msgEl.textContent = data.message;
+                    msgEl.className = 'd-block mt-1 text-danger';
+                    appliedVoucher = { type: null, value: 0, code: '' };
+                    calculateSelectedTotal();
+                }
+            } catch (err) {
+                msgEl.textContent = 'Lỗi hệ thống khi áp dụng voucher';
+                msgEl.className = 'd-block mt-1 text-danger';
+            }
+        });
+
+        // Tác động đè lại hàm tính tiền để cho phép trừ Voucher
+        const originalCalculateSelectedTotal = calculateSelectedTotal;
+        calculateSelectedTotal = function() {
+            let tongGoc = 0;
+            let thanhTienTruocVoucher = 0;
+            let countSelected = 0;
+            let hasTphcmOnly = false;
+
+            const allItemCbs = document.querySelectorAll('.item-select');
+            allItemCbs.forEach(cb => {
+                if (cb.checked) {
+                    let giaGoc = parseFloat(cb.dataset.giagoc) || 0;
+                    let giaBan = parseFloat(cb.dataset.giaban) || 0;
+                    let soLuong = parseInt(cb.dataset.soluong) || 0;
+                    let isTphcm = cb.dataset.istphcm === 'true';
+
+                    tongGoc += (giaGoc * soLuong);
+                    thanhTienTruocVoucher += (giaBan * soLuong);
+                    countSelected += soLuong;
+                    
+                    if (isTphcm) hasTphcmOnly = true;
+                }
+            });
+
+            // Tiết kiệm sản phẩm
+            let tienTietKiemProducts = tongGoc - thanhTienTruocVoucher;
+            
+            // Xử lý Voucher savings
+            let tienTietKiemVoucher = 0;
+            if (appliedVoucher.value > 0) {
+                if (appliedVoucher.type === 'PERCENT') {
+                    tienTietKiemVoucher = thanhTienTruocVoucher * (appliedVoucher.value / 100);
+                } else {
+                    tienTietKiemVoucher = appliedVoucher.value;
+                }
+                tienTietKiemVoucher = Math.min(tienTietKiemVoucher, thanhTienTruocVoucher); 
+            }
+
+            let thanhTienCuoicung = thanhTienTruocVoucher - tienTietKiemVoucher;
+            let tongTietKiem = tienTietKiemProducts + tienTietKiemVoucher;
+
+            // Update UI
+            document.getElementById('selected-count').textContent = countSelected;
+            document.getElementById('tongTienGoc').textContent = formatCurrency(tongGoc);
+            document.getElementById('tongTienGiam').textContent = `-${formatCurrency(tongTietKiem)}`;
+            document.getElementById('thanhTienPhaiTra').textContent = formatCurrency(thanhTienCuoicung);
+            
+            if (hasTphcmOnly) {
+                tphcmWarning.classList.remove('d-none');
+            } else {
+                tphcmWarning.classList.add('d-none');
+            }
+
+            btnCheckout.disabled = countSelected <= 0;
+            
+            // Check if all are selected to sync selectAllCb
+            if (selectAllCb) {
+                selectAllCb.checked = allItemCbs.length > 0 && Array.from(allItemCbs).every(i => i.checked);
+            }
+        };
+
+        // AJAX update cart functions
+        async function postCartAction(url, body) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: new URLSearchParams(body)
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Không thể cập nhật giỏ hàng.');
+            }
+
+            return data;
+        }
+
+        async function changeCartQty(productId, delta) {
+            const input = document.getElementById(`qty-${productId}`);
+            if (!input) return;
+
+            const nextValue = Math.max(1, Math.min((parseInt(input.value) || 1) + delta, parseInt(input.max) || 999));
+            try {
+                const data = await postCartAction('/Cart/Update', { id: productId, quantity: nextValue });
+                input.value = nextValue;
+                
+                const cb = document.querySelector(`.item-select[value="${productId}"]`);
+                if(cb) {
+                    cb.dataset.soluong = nextValue;
+                }
+                
+                const itemRow = document.querySelector(`[data-product-id="${productId}"]`);
+                itemRow?.querySelector('.item-linetotal')?.replaceChildren(document.createTextNode(formatCurrency(data.itemTotal)));
+                
+                calculateSelectedTotal();
+                
+                if (typeof refreshCartSummary === 'function') {
+                    refreshCartSummary(data.summary);
+                }
+                showToast(data.message, 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function removeCartItem(productId) {
+            try {
+                const data = await postCartAction('/Cart/Remove', { id: productId });
+                document.querySelector(`[data-product-id="${productId}"]`)?.remove();
+                
+                calculateSelectedTotal();
+                
+                if (typeof refreshCartSummary === 'function') {
+                    refreshCartSummary(data.summary);
+                }
+                showToast(data.message, 'success');
+
+                if (data.summary.totalItems === 0) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+    </script>
+}

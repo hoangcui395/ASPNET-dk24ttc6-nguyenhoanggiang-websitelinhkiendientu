@@ -1,0 +1,18 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Lỗi";
+}
+
+<div class="container py-5">
+    <h1 class="text-danger fw-bold">Đã xảy ra lỗi.</h1>
+    <h2 class="text-danger h5 mb-4">Hệ thống gặp sự cố khi xử lý yêu cầu của bạn.</h2>
+
+    @if (Model.ShowRequestId)
+    {
+        <p>
+            <strong>Mã yêu cầu:</strong> <code>@Model.RequestId</code>
+        </p>
+    }
+
+    <p>Vui lòng thử lại sau hoặc liên hệ quản trị viên nếu sự cố vẫn tiếp tục xảy ra.</p>
+</div>

@@ -1,0 +1,324 @@
+@model LinhKienDienTu_Web.Models.User
+@{
+    ViewData["Title"] = "Chi tiết người dùng: " + Model.Ho_Ten;
+    var cartItems = ViewBag.CartItems as List<Cart> ?? new List<Cart>();
+    var culture = new System.Globalization.CultureInfo("vi-VN");
+}
+
+<style>
+    .details-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        background: white;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.4em 1em;
+        border-radius: 50rem;
+    }
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #334155;
+        border-left: 4px solid #0056b3;
+        padding-left: 12px;
+        margin-bottom: 1.5rem;
+    }
+    .product-thumb {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .nav-pills .nav-link {
+        color: #64748b;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 10px 20px;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #0056b3;
+        color: white;
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-action="Index" class="btn btn-light rounded-circle shadow-sm" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-arrow-left text-muted"></i>
+            </a>
+            <div>
+                <h2 class="fw-bold mb-0">Hồ sơ khách hàng</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Quản lý người dùng</a></li>
+                        <li class="breadcrumb-item active">@Model.Email</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <form asp-action="ToggleLock" asp-route-id="@Model.User_ID" method="post">
+                <button type="submit" class="btn @(Model.IsLocked ? "btn-warning" : "btn-danger") rounded-pill px-4 shadow-sm">
+                    <i class="fas @(Model.IsLocked ? "fa-unlock" : "fa-user-lock") me-2"></i>
+                    @(Model.IsLocked ? "Mở khóa tài khoản" : "Khóa tài khoản")
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột trái: Thông tin tổng quan -->
+        <div class="col-lg-4">
+            <div class="details-card p-4 text-center mb-4">
+                <div class="mx-auto mb-3" style="width: 100px; height: 100px; background: #f1f5f9; color: #0056b3; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold;">
+                    @Model.Ho_Ten.Substring(0, 1).ToUpper()
+                </div>
+                <h4 class="fw-bold mb-1">@Model.Ho_Ten</h4>
+                <p class="text-muted small mb-3">@Model.Email</p>
+                
+                <div class="mb-3">
+                    @if (Model.IsLocked)
+                    {
+                        <span class="status-badge bg-danger text-white">TÀI KHOẢN BỊ KHÓA</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge bg-success-subtle text-success border border-success">ĐANG HOẠT ĐỘNG</span>
+                    }
+                </div>
+
+                <div class="row g-2 mt-4 pt-4 border-top">
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 bg-light">
+                            <div class="small text-muted mb-1">Đơn hàng</div>
+                            <div class="fw-bold text-dark fs-5">@Model.Orders.Count</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-3 bg-light">
+                            <div class="small text-muted mb-1">Giỏ hàng</div>
+                            <div class="fw-bold text-dark fs-5">@cartItems.Count</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-card p-4">
+                <h6 class="fw-bold text-uppercase small text-muted mb-4">Chi tiết liên hệ</h6>
+                <div class="mb-3 d-flex align-items-center gap-3">
+                    <div class="text-success"><i class="fas fa-phone"></i></div>
+                    <div>
+                        <div class="small text-muted">Số điện thoại</div>
+                        <div class="fw-semibold">@Model.So_Dien_Thoai</div>
+                    </div>
+                </div>
+                <div class="mb-3 d-flex align-items-center gap-3">
+                    <div class="text-success"><i class="fas fa-envelope"></i></div>
+                    <div>
+                        <div class="small text-muted">Email</div>
+                        <div class="fw-semibold">@Model.Email</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-success"><i class="fas fa-calendar-alt"></i></div>
+                    <div>
+                        <div class="small text-muted">Ngày tham gia</div>
+                        <div class="fw-semibold">@Model.Created_At.ToString("dd/MM/yyyy")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Tabs nội dung -->
+        <div class="col-lg-8">
+            <div class="details-card p-4 h-100">
+                <ul class="nav nav-pills mb-4 gap-2" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="orders-tab" data-bs-toggle="pill" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="true">
+                            <i class="fas fa-shopping-bag me-1"></i> Lịch sử đơn hàng
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cart-tab" data-bs-toggle="pill" data-bs-target="#cart" type="button" role="tab" aria-controls="cart" aria-selected="false">
+                            <i class="fas fa-shopping-cart me-1"></i> Giỏ hàng hiện tại
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="userTabsContent">
+                    <!-- Tab: Orders -->
+                    <div class="tab-pane fade show active" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                        @if (!Model.Orders.Any())
+                        {
+                            <div class="text-center py-5">
+                                <img src="/images/empty-cart.png" style="width: 120px; opacity: 0.3;" alt="No orders">
+                                <p class="text-muted mt-3">Khách hàng chưa có đơn hàng nào.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead class="bg-light small">
+                                        <tr>
+                                            <th>Mã đơn</th>
+                                            <th>Ngày đặt</th>
+                                            <th>Trạng thái</th>
+                                            <th class="text-end">Tổng tiền</th>
+                                            <th class="text-end">Chi tiết</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var order in Model.Orders.OrderByDescending(o => o.Ngay_Dat))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">#@order.Order_ID</td>
+                                                <td class="small text-muted">@order.Ngay_Dat.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>
+                                                    <span class="status-badge bg-light text-dark border">@order.Trang_Thai_Don_Hang</span>
+                                                </td>
+                                                <td class="text-end fw-bold text-success">
+                                                    @{
+                                                        var finalTotal = order.OrderDetails.Sum(od => od.Gia_Ban * od.So_Luong) - order.Tien_Tiet_Kiem_Voucher + order.Phi_Ship;
+                                                    }
+                                                    @finalTotal.ToString("C0", culture)
+                                                </td>
+                                                <td class="text-end">
+                                                    <a href="/AdminOrder/Detail/@order.Order_ID" class="btn btn-sm btn-light rounded-pill px-3">
+                                                        <i class="fas fa-external-link-alt small"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Tab: Cart -->
+                    <div class="tab-pane fade" id="cart" role="tabpanel" aria-labelledby="cart-tab">
+                        @if (!cartItems.Any())
+                        {
+                            <div class="text-center py-5">
+                                <img src="/images/empty-cart.png" style="width: 120px; opacity: 0.3;" alt="Empty cart">
+                                <p class="text-muted mt-3">Giỏ hàng của khách hiện đang trống.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead class="bg-light small">
+                                        <tr>
+                                            <th>Sản phẩm</th>
+                                            <th>Giá gốc</th>
+                                            <th class="text-center">Giảm (%)</th>
+                                            <th class="text-center">Số lượng</th>
+                                            <th class="text-end">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in cartItems)
+                                        {
+                                            var now = DateTime.Now;
+                                            decimal giamGia = 0;
+                                            var giaGoc = item.Product?.Gia_Goc ?? 0;
+                                            
+                                            // Logic đồng nhất với CartController.CalculateSellingPrice
+                                            bool hasActivePromotion = item.Product?.Promotion != null
+                                                && item.Product.Promotion.Ngay_Bat_Dau <= now
+                                                && item.Product.Promotion.Ngay_Ket_Thuc >= now;
+
+                                            if (hasActivePromotion)
+                                            {
+                                                giamGia = item.Product!.Promotion!.Phan_Tram_Giam;
+                                            }
+                                            else
+                                            {
+                                                giamGia = item.Product?.Phan_Tram_Giam ?? 0;
+                                            }
+                                            
+                                            giamGia = Math.Min(giamGia, 100m);
+                                            var giaSauGiam = Math.Round(giaGoc * (1 - giamGia / 100m), 0);
+                                            
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <img src="@(item.Product?.Hinh_Anh ?? "/images/placeholder.png")" class="product-thumb" alt="">
+                                                        <div>
+                                                            <div class="fw-semibold small">@item.Product?.Ten_San_Pham</div>
+                                                            <div class="text-muted smaller">ID: #@item.Product_ID</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="small">
+                                                    @if (giamGia > 0)
+                                                    {
+                                                        <del class="text-muted">@giaGoc.ToString("C0", culture)</del>
+                                                        <div class="fw-bold">@giaSauGiam.ToString("C0", culture)</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="fw-bold">@giaGoc.ToString("C0", culture)</div>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (giamGia > 0)
+                                                    {
+                                                        <span class="badge bg-danger rounded-pill" title="@(hasActivePromotion ? "Khuyến mãi đang chạy" : "Giảm giá cơ bản")">
+                                                            -@giamGia%
+                                                            @if (hasActivePromotion) { <i class="fas fa-bolt ms-1"></i> }
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted small">0%</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center fw-bold">@item.So_Luong</td>
+                                                <td class="text-end fw-bold text-success">
+                                                    @((giaSauGiam * item.So_Luong).ToString("C0", culture))
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot class="border-top">
+                                        <tr>
+                                            <td colspan="4" class="text-end fw-bold">Tổng giá trị đơn hàng (sau giảm):</td>
+                                            <td class="text-end fw-bold text-danger fs-5">
+                                                @{
+                                                    decimal total = 0;
+                                                    var nowTime = DateTime.Now;
+                                                    foreach(var i in cartItems) {
+                                                        decimal dRate = 0;
+                                                        bool isPromo = i.Product?.Promotion != null 
+                                                            && i.Product.Promotion.Ngay_Bat_Dau <= nowTime 
+                                                            && i.Product.Promotion.Ngay_Ket_Thuc >= nowTime;
+                                                        
+                                                        dRate = isPromo ? i.Product!.Promotion!.Phan_Tram_Giam : (i.Product?.Phan_Tram_Giam ?? 0);
+                                                        dRate = Math.Min(dRate, 100m);
+                                                        
+                                                        var pPrice = Math.Round((i.Product?.Gia_Goc ?? 0) * (1 - dRate / 100m), 0);
+                                                        total += pPrice * i.So_Luong;
+                                                    }
+                                                }
+                                                @total.ToString("C0", culture)
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

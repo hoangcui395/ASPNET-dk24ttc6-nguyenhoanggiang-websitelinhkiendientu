@@ -1,0 +1,48 @@
+@model LinhKienDienTu_Web.Models.GiftRule
+@{
+    ViewData["Title"] = "Thêm quy tắc quà tặng";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">Thiết lập quà tặng</h2>
+                <a asp-action="Index" class="btn btn-outline-secondary rounded-pill">Hủy</a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <form asp-action="Create" method="post">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">1. Chọn sản phẩm mua</label>
+                        <select asp-for="MainProduct_ID" asp-items="ViewBag.Products" class="form-select border-0 bg-light p-3 rounded-3" required>
+                            <option value="">-- Chọn sản phẩm chính --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">2. Số lượng tối thiểu để nhận quà</label>
+                        <input asp-for="MinQuantity" type="number" class="form-control border-0 bg-light p-3 rounded-3" value="1" min="1" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-danger">3. Chọn sản phẩm quà tặng kèm</label>
+                        <select asp-for="GiftProduct_ID" asp-items="ViewBag.Products" class="form-select border-0 bg-light p-3 rounded-3 border-start border-danger border-4" required>
+                            <option value="">-- Chọn sản phẩm tặng --</option>
+                        </select>
+                        <small class="text-muted">Lưu ý: Sản phẩm này sẽ hiển thị là "Tặng kèm" khi khách mua đủ số lượng.</small>
+                    </div>
+
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
+                        <label class="form-check-label ms-2" asp-for="IsActive">Kích hoạt quy tắc này</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 py-3 fw-bold rounded-pill">
+                        <i class="fas fa-magic me-2"></i>Lưu quy tắc quà tặng
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

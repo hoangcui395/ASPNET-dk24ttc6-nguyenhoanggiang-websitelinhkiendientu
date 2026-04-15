@@ -1,0 +1,94 @@
+@model IEnumerable<Promotion>
+@{
+    ViewData["Title"] = "Quản lý khuyến mãi";
+    var productCounts = ViewBag.ProductCounts as Dictionary<int, int> ?? new();
+}
+
+<style>
+    .promo-card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); overflow: hidden; }
+    .badge-active { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 50rem; padding: 0.3em 0.75em; font-size: 0.75rem; font-weight: 700; }
+    .badge-inactive { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; border-radius: 50rem; padding: 0.3em 0.75em; font-size: 0.75rem; font-weight: 700; }
+    .discount-pill { background: #fef2f2; color: #dc2626; font-weight: 800; font-size: 1rem; border-radius: 8px; padding: 0.15rem 0.6rem; }
+</style>
+
+<div class="container py-4">
+
+    @if (TempData["SuccessMessage"] is string msg && !string.IsNullOrWhiteSpace(msg))
+    {
+        <div class="alert alert-success rounded-4 border-0 mb-4 d-flex align-items-center gap-2">
+            <i class="fas fa-circle-check text-success"></i> @msg
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:#2e59d9;">Quản lý khuyến mãi</h2>
+            <p class="text-muted mb-0 small">Tạo và gán khuyến mãi cho sản phẩm theo danh mục hoặc chọn thủ công.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary rounded-pill px-4 fw-semibold">
+            <i class="fas fa-plus me-2"></i>Tạo khuyến mãi
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 text-muted bg-white rounded-4 shadow-sm">
+            <i class="fas fa-tags fa-3x mb-3 d-block"></i>
+            Chưa có khuyến mãi nào. Hãy tạo khuyến mãi đầu tiên!
+        </div>
+    }
+    else
+    {
+        <div class="promo-card bg-white">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên khuyến mãi</th>
+                            <th class="text-center">Giảm</th>
+                            <th>Thời gian</th>
+                            <th class="text-center">Sản phẩm</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-end">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model)
+                        {
+                            var isActive = p.Ngay_Bat_Dau <= DateTime.Now && p.Ngay_Ket_Thuc >= DateTime.Now;
+                            var count = productCounts.TryGetValue(p.Promotion_ID, out var c) ? c : 0;
+                            <tr>
+                                <td class="fw-semibold">@p.Ten_Khuyen_Mai</td>
+                                <td class="text-center">
+                                    <span class="discount-pill">-@p.Phan_Tram_Giam%</span>
+                                </td>
+                                <td class="small text-muted">
+                                    @p.Ngay_Bat_Dau.ToString("dd/MM/yy") – @p.Ngay_Ket_Thuc.ToString("dd/MM/yy")
+                                </td>
+                                <td class="text-center">
+                                    <a asp-action="Details" asp-route-id="@p.Promotion_ID"
+                                       class="text-decoration-none fw-semibold @(count > 0 ? "text-success" : "text-muted")">
+                                        @count SP
+                                    </a>
+                                </td>
+                                <td class="text-center">
+                                    <span class="@(isActive ? "badge-active" : "badge-inactive")">
+                                        @(isActive ? "Đang chạy" : "Không hoạt động")
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Edit" asp-route-id="@p.Promotion_ID"
+                                       class="btn btn-sm btn-outline-primary rounded-pill me-1">Sửa</a>
+                                    <a asp-action="Details" asp-route-id="@p.Promotion_ID"
+                                       class="btn btn-sm btn-outline-info rounded-pill me-1">Chi tiết</a>
+                                    <a asp-action="Delete" asp-route-id="@p.Promotion_ID"
+                                       class="btn btn-sm btn-outline-danger rounded-pill">Xóa</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

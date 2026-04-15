@@ -1,0 +1,39 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = "Xóa sản phẩm";
+}
+
+<style>
+    .main-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        background: white;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0" style="color:#e74a3b;font-weight:700;">Xóa sản phẩm</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+    </div>
+
+    <div class="main-card p-4">
+        <div class="alert alert-danger mb-3">
+            Bạn có chắc muốn xóa sản phẩm <strong>@Model.Ten_San_Pham</strong>?
+        </div>
+
+        <div class="mb-3">
+            <div><strong>Giá:</strong> @Model.Gia_Goc.ToString("N0") đ</div>
+            <div><strong>Số lượng tồn:</strong> @Model.So_Luong_Ton</div>
+            <div><strong>Trạng thái:</strong> @Model.Trang_Thai</div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Product_ID" />
+            <button type="submit" class="btn btn-danger px-4">Xóa</button>
+            <a asp-action="Index" class="btn btn-light border ms-2">Hủy</a>
+        </form>
+    </div>
+</div>

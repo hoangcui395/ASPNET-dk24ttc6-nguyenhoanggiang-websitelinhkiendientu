@@ -1,0 +1,43 @@
+@model IEnumerable<SubCategory>
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Quản lý danh mục con";
+}
+
+<div class="container py-4">
+    @if (TempData["SuccessMessage"] is string successMessage && !string.IsNullOrWhiteSpace(successMessage))
+    {
+        <script>window.addEventListener('load', function(){ alert(@Html.Raw(JsonSerializer.Serialize(successMessage))); });</script>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0" style="color:#2e59d9;">Danh mục con</h2>
+        <a asp-action="Create" class="btn btn-primary">Thêm danh mục con</a>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead><tr><th>#</th><th>Tên danh mục con</th><th>Danh mục chính</th><th class="text-end">Hành động</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>#@item.SubCategory_ID</td>
+                        <td class="fw-semibold">@item.Ten_Danh_Muc_Con</td>
+                        <td>@item.Category?.Ten_Danh_Muc</td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@item.SubCategory_ID" class="btn btn-sm btn-outline-primary">Sửa</a>
+                            <a asp-action="Details" asp-route-id="@item.SubCategory_ID" class="btn btn-sm btn-outline-info">Chi tiết</a>
+                            <a asp-action="Delete" asp-route-id="@item.SubCategory_ID" class="btn btn-sm btn-outline-danger">Xóa</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

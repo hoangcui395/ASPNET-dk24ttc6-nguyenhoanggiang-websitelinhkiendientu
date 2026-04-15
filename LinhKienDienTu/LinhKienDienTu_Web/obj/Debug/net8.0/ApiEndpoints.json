@@ -1,0 +1,66 @@
+[
+  {
+    "ContainingType": "LinhKienDienTu_Web.Controllers.AuthController",
+    "Method": "Login",
+    "RelativePath": "api/Auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LinhKienDienTu_Web.Controllers.LoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LinhKienDienTu_Web.Controllers.ChatbotController",
+    "Method": "InitSession",
+    "RelativePath": "api/Chatbot/init",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LinhKienDienTu_Web.Controllers.ChatInitRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LinhKienDienTu_Web.Controllers.ChatbotController",
+    "Method": "ProcessMessage",
+    "RelativePath": "api/Chatbot/message",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "LinhKienDienTu_Web.Controllers.ChatMessageRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LinhKienDienTu_Web.Controllers.ChatbotController",
+    "Method": "TransferToHuman",
+    "RelativePath": "api/Chatbot/transfer",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "sessionId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
