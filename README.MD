@@ -22,7 +22,7 @@
 * [ ] Thống kê doanh thu (Tuần 4)
 
 ## 4. Hướng dẫn cài đặt
-1. Clone dự án: `git clone [Link repo]`
+1. Clone dự án: `git clone link: https://github.com/hoangcui395/ASPNET-dk24ttc6-nguyenhoanggiang-websitelinhkiendientu.git`
 2. Mở bằng Visual Studio 2022.
 3. restore database bằng file `LinhKienDienTu.bak` trong thư mục `Database`.
 4. Cập nhật thông tin kết nối Database trong file `appsettings.json`.
